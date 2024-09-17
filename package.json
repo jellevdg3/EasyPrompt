@@ -1,0 +1,125 @@
+{
+  "name": "code-prompt-generator",
+  "displayName": "Code Prompt Generator",
+  "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
+  "version": "0.0.2",
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:fileListView",
+    "onCommand:fileListManager.openFileList",
+    "onCommand:fileListManager.addFiles",
+    "onCommand:fileListManager.copyPrompt",
+    "onCommand:fileListManager.clearFiles"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fileListManager",
+          "title": "File List Manager",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fileListManager": [
+        {
+          "id": "fileListView",
+          "name": "Files"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "fileListManager.openFileList",
+        "title": "Open File List Manager"
+      },
+      {
+        "command": "fileListManager.addFiles",
+        "title": "Add Files"
+      },
+      {
+        "command": "fileListManager.copyPrompt",
+        "title": "Copy Prompt"
+      },
+      {
+        "command": "fileListManager.clearFiles",
+        "title": "Clear Files"
+      },
+      {
+        "command": "fileListManager.toggleFile",
+        "title": "Toggle Enable/Disable"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fileListManager.addFiles",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Add Files",
+          "icon": "resources/add.svg"
+        },
+        {
+          "command": "fileListManager.clearFiles",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Clear Files",
+          "icon": "resources/clear.svg"
+        },
+        {
+          "command": "fileListManager.copyPrompt",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Copy Prompt",
+          "icon": "resources/copy.svg"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fileListManager.toggleFile",
+          "when": "view == fileListView",
+          "group": "inline",
+          "title": "Toggle Enable/Disable"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "fileListManager.openFileList",
+        "key": "ctrl+alt+f",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Code Prompt Generator Configuration",
+      "properties": {
+        "codePromptGenerator.someSetting": {
+          "type": "string",
+          "default": "defaultValue",
+          "description": "A sample configuration setting for the Code Prompt Generator."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.93.0",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "20.x",
+    "eslint": "^9.9.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1"
+  }
+}
