@@ -26,6 +26,7 @@ function activate(context) {
 	const treeView = vscode.window.createTreeView('fileListView', {
 		treeDataProvider: fileListProvider,
 		showCollapseAll: true,
+		// @ts-ignore
 		dragAndDropController: dragAndDropController
 	});
 
@@ -62,9 +63,9 @@ function activate(context) {
 		vscode.window.showInformationMessage('Prompt copied to clipboard!');
 	});
 
-	// Command to toggle file enabled/disabled
-	let toggleFileCommand = vscode.commands.registerCommand('fileListManager.toggleFile', (file) => {
-		fileListProvider.toggleFile(file);
+	// Command to toggle file/folder enabled/disabled
+	let toggleFileCommand = vscode.commands.registerCommand('fileListManager.toggleFile', (element) => {
+		fileListProvider.toggleFile(element);
 	});
 
 	// Register all commands and the treeView

@@ -10,13 +10,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onView:fileListView",
-    "onCommand:fileListManager.openFileList",
-    "onCommand:fileListManager.addFiles",
-    "onCommand:fileListManager.copyPrompt",
-    "onCommand:fileListManager.clearFiles"
-  ],
   "main": "./src/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -81,14 +74,6 @@
           "group": "navigation",
           "title": "Copy Prompt",
           "icon": "copy"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "fileListManager.toggleFile",
-          "when": "view == fileListView",
-          "group": "inline",
-          "title": "Toggle Enable/Disable"
         }
       ]
     },

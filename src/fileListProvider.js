@@ -10,8 +10,6 @@ class PlaceholderTreeItem extends vscode.TreeItem {
 	constructor() {
 		super('Drag files here to start', vscode.TreeItemCollapsibleState.None);
 		this.contextValue = 'placeholder';
-		this.iconPath = new vscode.ThemeIcon('file'); // Using a built-in icon
-		this.tooltip = 'Drag and drop files to begin.';
 		this.description = '';
 		// Optional: Make it non-selectable
 		this.command = undefined;
@@ -24,17 +22,30 @@ class FolderItem extends vscode.TreeItem {
 		this.contextValue = 'folderItem';
 		this.children = children;
 		this.iconPath = new vscode.ThemeIcon('folder'); // Using a built-in icon
+		this.command = {
+			command: 'fileListManager.toggleFile',
+			title: 'Toggle Enable/Disable',
+			arguments: [this]
+		};
+		// Determine if all child files are disabled to set folder color
+		const allChildrenDisabled = children.length > 0 && children.every(child => child.file && child.file.disabled);
+		this.color = allChildrenDisabled ? 'gray' : undefined;
 	}
 }
 
 class FileItem extends vscode.TreeItem {
-	constructor(label, file, collapsibleState = vscode.TreeItemCollapsibleState.None, command = undefined) {
+	constructor(label, file, collapsibleState = vscode.TreeItemCollapsibleState.None) {
 		super(label, collapsibleState);
-		this.command = command;
 		this.contextValue = file.disabled ? 'disabledFile' : 'enabledFile';
 		this.tooltip = file.path;
 		this.file = file; // Store the file object for reference
 		this.iconPath = new vscode.ThemeIcon(file.disabled ? 'circle-slash' : 'file'); // Dynamic icon based on state
+		this.command = {
+			command: 'fileListManager.toggleFile',
+			title: 'Toggle Enable/Disable',
+			arguments: [this]
+		};
+		this.color = file.disabled ? 'gray' : undefined;
 	}
 }
 
@@ -74,6 +85,10 @@ class FileListProvider {
 		const root = {};
 
 		files.forEach(file => {
+			if (!file || !file.path) {
+				console.warn('Encountered an undefined or malformed file object:', file);
+				return;
+			}
 			const parts = file.path.split('/');
 			let current = root;
 
@@ -101,15 +116,16 @@ class FileListProvider {
 						vscode.window.showErrorMessage(`Internal error: File not found for path "${fullPath}".`);
 						return new vscode.TreeItem(name); // Fallback to a basic TreeItem
 					}
-					const label = file.disabled ? `~ ${name}` : name;
+					const label = file.disabled ? `${name}` : name;
 					const fileItem = new FileItem(label, file);
 					return fileItem;
 				} else {
+					const children = convertToTreeItems(item.__children, fullPath);
 					const folderItem = new FolderItem(
 						name,
-						vscode.TreeItemCollapsibleState.Expanded // Changed from Collapsed to Expanded
+						vscode.TreeItemCollapsibleState.Expanded,
+						children
 					);
-					folderItem.children = convertToTreeItems(item.__children, fullPath);
 					return folderItem;
 				}
 			});
@@ -126,6 +142,10 @@ class FileListProvider {
 		}
 
 		for (const filePath of filePaths) {
+			if (!filePath) {
+				console.warn('Encountered an undefined file path:', filePath);
+				continue;
+			}
 			try {
 				const content = await fs.promises.readFile(filePath, 'utf8');
 				const relativePath = path.relative(basePath, filePath);
@@ -134,6 +154,8 @@ class FileListProvider {
 				// Avoid duplicates
 				if (!this.files.find(f => f.path === normalizedPath)) {
 					this.files.push({ path: normalizedPath, content: content, disabled: false });
+				} else {
+					console.info(`File already exists in the list: ${normalizedPath}`);
 				}
 			} catch (error) {
 				console.error(`Error reading file ${filePath}: ${error}`);
@@ -148,18 +170,40 @@ class FileListProvider {
 		this.refresh();
 	}
 
-	toggleFile(file) {
-		if (file) { // Defensive check
-			file.disabled = !file.disabled;
-			this.refresh();
+	toggleFile(element) {
+		if (element instanceof FileItem) {
+			if (element.file) {
+				element.file.disabled = !element.file.disabled;
+				this.refresh();
+			} else {
+				vscode.window.showErrorMessage('Unable to toggle file: File object is undefined.');
+			}
+		} else if (element instanceof FolderItem) {
+			if (element.children && element.children.length > 0) {
+				// Determine the new state based on the current state of the first child
+				const anyEnabled = element.children.some(child => child.file && !child.file.disabled);
+				const newState = anyEnabled; // If any child is enabled, disable all; else enable all
+				element.children.forEach(child => {
+					if (child.file) {
+						child.file.disabled = newState;
+					}
+				});
+				this.refresh();
+			} else {
+				vscode.window.showErrorMessage('Unable to toggle folder: No children found.');
+			}
 		} else {
-			vscode.window.showErrorMessage('Unable to toggle file: File is undefined.');
+			vscode.window.showErrorMessage('Unable to toggle element: Unrecognized element type.');
 		}
 	}
 
 	// Drag and Drop Methods
 	async handleDrag(sourceElements, dataTransfer, token) {
-		return sourceElements.map(el => el.file.path);
+		if (!Array.isArray(sourceElements)) {
+			console.warn('handleDrag: sourceElements is not an array:', sourceElements);
+			return [];
+		}
+		return sourceElements.map(el => el.file && el.file.path ? el.file.path : null).filter(path => path !== null);
 	}
 
 	async handleDrop(targetElement, dataTransfer, _token) {
@@ -193,8 +237,8 @@ class FileListProvider {
 			}
 
 		} catch (error) {
-			console.error(`Error reading file ${error}`);
-			vscode.window.showErrorMessage(`Failed to read file: ${error}`);
+			console.error(`Error handling drop: ${error}`);
+			vscode.window.showErrorMessage(`Failed to handle drop: ${error}`);
 		}
 
 		this.refresh();
