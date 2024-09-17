@@ -2,6 +2,7 @@
   "name": "code-prompt-generator",
   "displayName": "Code Prompt Generator",
   "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
+  "icon": "images/icon.png",
   "version": "0.0.2",
   "engines": {
     "vscode": "^1.93.0"
@@ -31,7 +32,8 @@
       "fileListManager": [
         {
           "id": "fileListView",
-          "name": "Files"
+          "name": "Files",
+		  "icon": "resources/icon.svg"
         }
       ]
     },
