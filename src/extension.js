@@ -59,7 +59,7 @@ function activate(context) {
 		for (const file of activeFiles) {
 			prompt += `// File: ${file.path}\n${file.content}\n\n`;
 		}
-		await vscode.env.clipboard.writeText(prompt + "Respond with full source code.\n\n");
+		await vscode.env.clipboard.writeText(prompt);
 		vscode.window.showInformationMessage('Prompt copied to clipboard!');
 	});
 
