@@ -1,4 +1,4 @@
-// File: code-prompt-generator/fileListProvider.js
+// File: ../../Dev/CodePromptGenerator/src/fileListProvider.js
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
@@ -10,10 +10,7 @@ class PlaceholderTreeItem extends vscode.TreeItem {
 	constructor() {
 		super('Drag files here to start', vscode.TreeItemCollapsibleState.None);
 		this.contextValue = 'placeholder';
-		this.iconPath = {
-			light: path.join(__dirname, 'resources', 'light', 'placeholder.svg'),
-			dark: path.join(__dirname, 'resources', 'dark', 'placeholder.svg')
-		};
+		this.iconPath = new vscode.ThemeIcon('file'); // Using a built-in icon
 		this.tooltip = 'Drag and drop files to begin.';
 		this.description = '';
 		// Optional: Make it non-selectable
@@ -26,10 +23,7 @@ class FolderItem extends vscode.TreeItem {
 		super(label, collapsibleState);
 		this.contextValue = 'folderItem';
 		this.children = children;
-		this.iconPath = {
-			light: path.join(__dirname, 'resources', 'light', 'folder.svg'),
-			dark: path.join(__dirname, 'resources', 'dark', 'folder.svg')
-		};
+		this.iconPath = new vscode.ThemeIcon('folder'); // Using a built-in icon
 	}
 }
 
@@ -40,10 +34,7 @@ class FileItem extends vscode.TreeItem {
 		this.contextValue = file.disabled ? 'disabledFile' : 'enabledFile';
 		this.tooltip = file.path;
 		this.file = file; // Store the file object for reference
-		this.iconPath = {
-			light: path.join(__dirname, 'resources', 'light', 'file.svg'),
-			dark: path.join(__dirname, 'resources', 'dark', 'file.svg')
-		};
+		this.iconPath = new vscode.ThemeIcon(file.disabled ? 'circle-slash' : 'file'); // Dynamic icon based on state
 	}
 }
 
@@ -166,7 +157,7 @@ class FileListProvider {
 		}
 	}
 
-	// Drag and Drop Methods remain unchanged
+	// Drag and Drop Methods
 	async handleDrag(sourceElements, dataTransfer, token) {
 		return sourceElements.map(el => el.file.path);
 	}

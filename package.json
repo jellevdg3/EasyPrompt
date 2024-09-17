@@ -33,7 +33,7 @@
         {
           "id": "fileListView",
           "name": "Files",
-		  "icon": "resources/icon.svg"
+          "icon": "resources/icon.svg"
         }
       ]
     },
@@ -66,21 +66,21 @@
           "when": "view == fileListView",
           "group": "navigation",
           "title": "Add Files",
-          "icon": "resources/add.svg"
+          "icon": "add"
         },
         {
           "command": "fileListManager.clearFiles",
           "when": "view == fileListView",
           "group": "navigation",
           "title": "Clear Files",
-          "icon": "resources/clear.svg"
+          "icon": "trash"
         },
         {
           "command": "fileListManager.copyPrompt",
           "when": "view == fileListView",
           "group": "navigation",
           "title": "Copy Prompt",
-          "icon": "resources/copy.svg"
+          "icon": "copy"
         }
       ],
       "view/item/context": [
