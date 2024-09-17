@@ -2,6 +2,7 @@
   "name": "code-prompt-generator",
   "displayName": "Code Prompt Generator",
   "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
+  "publisher": "jellevdg3",
   "icon": "images/icon.png",
   "version": "0.0.2",
   "engines": {
@@ -10,6 +11,7 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -108,5 +110,10 @@
     "eslint": "^9.9.1",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jellevdg3/CodePromptGenerator.git"
+  },
+  "license": "MIT"
 }
