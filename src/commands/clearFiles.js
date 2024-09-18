@@ -10,12 +10,7 @@ const vscode = require('vscode');
  */
 function registerCommand(fileListProvider) {
 	return vscode.commands.registerCommand('fileListManager.clearFiles', () => {
-		vscode.window.showWarningMessage('Are you sure you want to clear all files?', 'Yes', 'No')
-			.then(selection => {
-				if (selection === 'Yes') {
-					fileListProvider.clearFiles();
-				}
-			});
+		fileListProvider.clearFiles();
 	});
 }
 
