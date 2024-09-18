@@ -60,28 +60,35 @@
       }
     ],
     "menus": {
-      "view/title": [
-        {
-          "command": "fileListManager.addFiles",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Add Files",
-          "icon": "add"
-        },
-        {
-          "command": "fileListManager.clearFiles",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Clear Files",
-          "icon": "trash"
-        },
-        {
-          "command": "fileListManager.copyPrompt",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Copy Prompt",
-          "icon": "copy"
-        }
+     "view/title": [
+    {
+      "command": "fileListManager.addFiles",
+      "when": "view == fileListView",
+      "group": "navigation",
+      "title": "Add Files",
+      "icon": "add"
+    },
+    {
+      "command": "fileListManager.clearFiles",
+      "when": "view == fileListView",
+      "group": "navigation",
+      "title": "Clear Files",
+      "icon": "trash"
+    },
+    {
+      "command": "fileListManager.copyPrompt",
+      "when": "view == fileListView",
+      "group": "navigation",
+      "title": "Copy Prompt",
+      "icon": "copy"
+    },
+    {
+      "command": "fileListManager.pasteCode",
+      "when": "view == fileListView",
+      "group": "navigation",
+      "title": "Paste Code",
+      "icon": "paste"
+    }
       ],
       "commandPalette": [
         {

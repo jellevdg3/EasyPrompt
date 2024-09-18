@@ -13,7 +13,7 @@ function normalizePath(p) {
  * Extracts the file path from the first line(s) of the content.
  * It looks for lines like:
  * // src/commands/copyPrompt.js
- * --- copyPrompt.js ---
+ * --- src/commands/copyPrompt.js ---
  * @param {string} content
  * @returns {string|null} The extracted file path or null if not found.
  */
@@ -28,8 +28,8 @@ function extractFilePathFromContent(content) {
 
 		// Check for patterns (case-insensitive)
 		const regexes = [
-			/^\/\/\s*(.*)$/i,            // Matches // path/to/file
-			/^---\s*(.*)\s*---$/i        // Matches --- path/to/file ---
+			/^\/\/\s*(.+)$/i,            // Matches // path/to/file
+			/^---\s*(.+)\s*---$/i        // Matches --- path/to/file ---
 		];
 
 		for (const regex of regexes) {
