@@ -29,6 +29,12 @@
           "id": "fileListView",
           "name": "Files",
           "icon": "resources/icon.svg"
+        },
+        {
+          "id": "pasteCodeView",
+          "name": "Paste Code",
+          "type": "webview",
+          "icon": "resources/paste-icon.svg"
         }
       ]
     },
@@ -52,43 +58,31 @@
       {
         "command": "fileListManager.toggleFile",
         "title": "Toggle Enable/Disable"
-      },
-      {
-        "command": "fileListManager.pasteCode",
-        "title": "Paste Code",
-        "category": "Code Prompt Generator"
       }
     ],
     "menus": {
-     "view/title": [
-    {
-      "command": "fileListManager.addFiles",
-      "when": "view == fileListView",
-      "group": "navigation",
-      "title": "Add Files",
-      "icon": "add"
-    },
-    {
-      "command": "fileListManager.clearFiles",
-      "when": "view == fileListView",
-      "group": "navigation",
-      "title": "Clear Files",
-      "icon": "trash"
-    },
-    {
-      "command": "fileListManager.copyPrompt",
-      "when": "view == fileListView",
-      "group": "navigation",
-      "title": "Copy Prompt",
-      "icon": "copy"
-    },
-    {
-      "command": "fileListManager.pasteCode",
-      "when": "view == fileListView",
-      "group": "navigation",
-      "title": "Paste Code",
-      "icon": "paste"
-    }
+      "view/title": [
+        {
+          "command": "fileListManager.addFiles",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Add Files",
+          "icon": "add"
+        },
+        {
+          "command": "fileListManager.clearFiles",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Clear Files",
+          "icon": "trash"
+        },
+        {
+          "command": "fileListManager.copyPrompt",
+          "when": "view == fileListView",
+          "group": "navigation",
+          "title": "Copy Prompt",
+          "icon": "copy"
+        }
       ],
       "commandPalette": [
         {

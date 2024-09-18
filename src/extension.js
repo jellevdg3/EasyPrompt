@@ -1,9 +1,8 @@
-// src/extension.js
-
 const vscode = require('vscode');
 const FileListProvider = require('./providers/fileListProvider');
 const DragAndDropController = require('./controllers/dragAndDropController');
 const registerCommands = require('./commands/index');
+const PasteCodeViewProvider = require('./providers/pasteCodeViewProvider');
 
 function activate(context) {
 	console.log('Code Prompt Generator extension is now active!');
@@ -33,6 +32,11 @@ function activate(context) {
 	// Register all commands
 	const commands = registerCommands(fileListProvider);
 	context.subscriptions.push(...commands, treeView);
+
+	// Register the PasteCodeViewProvider
+	const pasteCodeViewProvider = new PasteCodeViewProvider(context);
+	pasteCodeViewProvider.register();
+	context.subscriptions.push(pasteCodeViewProvider);
 }
 
 function deactivate() { }

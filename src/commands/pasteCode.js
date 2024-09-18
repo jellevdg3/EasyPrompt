@@ -120,17 +120,47 @@ function registerCommand(fileListProvider) {
                     <style>
                         body {
                             font-family: sans-serif;
-                            padding: 10px;
+                            padding: 20px;
+                            background-color: #1e1e1e; /* Dark background for the entire webview */
+                            color: #ffffff; /* White text color */
+                        }
+                        h2 {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        label {
+                            display: block;
+                            margin-bottom: 5px;
+                            font-weight: bold;
                         }
                         textarea {
                             width: 100%;
                             height: 300px;
                             resize: vertical;
-                            margin-bottom: 10px;
+                            margin-bottom: 20px;
+                            padding: 10px;
+                            background-color: #2d2d2d; /* Dark gray background */
+                            color: #ffffff; /* White text */
+                            border: 1px solid #555555; /* Subtle border */
+                            border-radius: 4px;
+                            font-family: 'Courier New', Courier, monospace; /* Monospace font for code */
+                            font-size: 14px;
                         }
                         button {
                             padding: 10px 20px;
                             font-size: 16px;
+                            background-color: #3c3c3c; /* Flat light gray */
+                            color: #ffffff; /* White text */
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+                        button:hover {
+                            background-color: #5a5a5a; /* Slightly lighter on hover */
+                        }
+                        button:active {
+                            background-color: #2d2d2d; /* Darker when clicked */
                         }
                     </style>
                 </head>
