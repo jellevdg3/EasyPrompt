@@ -1,4 +1,7 @@
+// src/models/fileItem.js
+
 const vscode = require('vscode');
+const path = require('path');
 
 /**
  * @class FileItem
@@ -11,8 +14,9 @@ class FileItem extends vscode.TreeItem {
 	 * @param {Object} file 
 	 * @param {vscode.Uri} resourceUri
 	 * @param {vscode.TreeItemCollapsibleState} collapsibleState 
+	 * @param {string} extensionPath - The root path of the extension
 	 */
-	constructor(label, file, resourceUri, collapsibleState = vscode.TreeItemCollapsibleState.None) {
+	constructor(label, file, resourceUri, collapsibleState = vscode.TreeItemCollapsibleState.None, extensionPath) {
 		super(label, collapsibleState);
 		this.file = file; // Store the file object for reference
 
@@ -35,6 +39,17 @@ class FileItem extends vscode.TreeItem {
 			title: 'Toggle Enable/Disable',
 			arguments: [this]
 		};
+
+		// Set the icon based on the disabled state
+		if (file.disabled) {
+			this.iconPath = {
+				light: path.join(extensionPath, 'resources', 'disabled-light.svg'),
+				dark: path.join(extensionPath, 'resources', 'disabled-dark.svg')
+			};
+		} else {
+			// Optional: Explicitly set to undefined to use default icons
+			this.iconPath = undefined;
+		}
 	}
 }
 

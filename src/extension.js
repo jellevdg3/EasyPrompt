@@ -1,3 +1,5 @@
+// src/extension.js
+
 const vscode = require('vscode');
 const FileListProvider = require('./providers/fileListProvider');
 const DragAndDropController = require('./controllers/dragAndDropController');
@@ -6,7 +8,8 @@ const registerCommands = require('./commands/index');
 function activate(context) {
 	console.log('Code Prompt Generator extension is now active!');
 
-	const fileListProvider = new FileListProvider();
+	const extensionPath = context.extensionPath; // Get the extension's root path
+	const fileListProvider = new FileListProvider(extensionPath); // Pass it to FileListProvider
 
 	const dragAndDrop = {
 		dragMimeTypes: ['application/vnd.code.tree.fileListView'],

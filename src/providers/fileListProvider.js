@@ -8,8 +8,12 @@ const { FileItem } = require('../models/fileItem');
 const pathUtils = require('../utils/pathUtils');
 
 class FileListProvider {
-	constructor() {
+	/**
+	 * @param {string} extensionPath - The root path of the extension
+	 */
+	constructor(extensionPath) {
 		this.files = [];
+		this.extensionPath = extensionPath; // Store the extension path
 		this._onDidChangeTreeData = new vscode.EventEmitter();
 		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
@@ -72,7 +76,7 @@ class FileListProvider {
 
 					const fileUri = vscode.Uri.file(file.fullPath); // Use absolute path
 					const label = file.disabled ? `${name}` : name;
-					const fileItem = new FileItem(label, file, fileUri);
+					const fileItem = new FileItem(label, file, fileUri, vscode.TreeItemCollapsibleState.None, this.extensionPath);
 					return fileItem;
 				} else {
 					const folderUri = vscode.Uri.file(path.join(this.getWorkspacePath(), fullPath));
