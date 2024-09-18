@@ -1,15 +1,12 @@
 // src/providers/fileListProvider.js
-const vscode = require('vscode');
+
 const path = require('path');
+const vscode = require('vscode');
 const { PlaceholderTreeItem } = require('../models/placeholderTreeItem');
 const { FolderItem } = require('../models/folderItem');
 const { FileItem } = require('../models/fileItem');
 const pathUtils = require('../utils/pathUtils');
 
-/**
- * @class FileListProvider
- * Provides the data for the file list tree view.
- */
 class FileListProvider {
 	constructor() {
 		this.files = [];
@@ -28,17 +25,13 @@ class FileListProvider {
 	getChildren(element) {
 		if (!element) {
 			if (this.files.length === 0) {
-				// Return the placeholder when no files are present
 				return [new PlaceholderTreeItem()];
 			}
-			// Root level: build the tree from the flat file list
 			const tree = this.buildTree(this.files);
 			return tree;
 		} else if (element instanceof FolderItem) {
-			// If the element is a folder, return its children
 			return element.children;
 		}
-		// If the element is a file, it has no children
 		return [];
 	}
 
@@ -67,7 +60,6 @@ class FileListProvider {
 		const convertToTreeItems = (obj, parentPath = '') => {
 			return Object.keys(obj).map(name => {
 				const item = obj[name];
-				// Ensure consistent path separators by using '/'
 				const fullPath = parentPath ? `${parentPath}/${name}` : name;
 
 				if (item.__isFile) {
@@ -75,17 +67,21 @@ class FileListProvider {
 					if (!file) {
 						console.error(`File not found for path: ${fullPath}`);
 						vscode.window.showErrorMessage(`Internal error: File not found for path "${fullPath}".`);
-						return new vscode.TreeItem(name); // Fallback to a basic TreeItem
+						return new vscode.TreeItem(name);
 					}
+
+					const fileUri = vscode.Uri.file(file.fullPath); // Use absolute path
 					const label = file.disabled ? `${name}` : name;
-					const fileItem = new FileItem(label, file);
+					const fileItem = new FileItem(label, file, fileUri);
 					return fileItem;
 				} else {
+					const folderUri = vscode.Uri.file(path.join(this.getWorkspacePath(), fullPath));
 					const children = convertToTreeItems(item.__children, fullPath);
 					const folderItem = new FolderItem(
 						name,
 						vscode.TreeItemCollapsibleState.Expanded,
-						children
+						children,
+						folderUri
 					);
 					return folderItem;
 				}
@@ -95,11 +91,19 @@ class FileListProvider {
 		return convertToTreeItems(root);
 	}
 
-	async addFiles(filePaths) {
+	getWorkspacePath() {
 		const workspaceFolders = vscode.workspace.workspaceFolders;
-		let basePath = '';
 		if (workspaceFolders && workspaceFolders.length > 0) {
-			basePath = workspaceFolders[0].uri.fsPath;
+			return workspaceFolders[0].uri.fsPath;
+		}
+		return '';
+	}
+
+	async addFiles(filePaths) {
+		const workspacePath = this.getWorkspacePath();
+		if (!workspacePath) {
+			vscode.window.showErrorMessage('No workspace is open.');
+			return;
 		}
 
 		for (const filePath of filePaths) {
@@ -108,10 +112,10 @@ class FileListProvider {
 				continue;
 			}
 			try {
-				const relativePath = path.relative(basePath, filePath);
-				const normalizedPath = pathUtils.normalizePath(relativePath);
+				const absolutePath = path.resolve(filePath);
+				const normalizedPath = pathUtils.normalizePath(path.relative(workspacePath, absolutePath));
 				if (!this.files.find(f => f.path === normalizedPath)) {
-					this.files.push({ path: normalizedPath, disabled: false });
+					this.files.push({ path: normalizedPath, fullPath: absolutePath, disabled: false });
 				} else {
 					console.info(`File already exists in the list: ${normalizedPath}`);
 				}
@@ -138,9 +142,8 @@ class FileListProvider {
 			}
 		} else if (element instanceof FolderItem) {
 			if (element.children && element.children.length > 0) {
-				// Determine the new state based on the current state of the first child
 				const anyEnabled = element.children.some(child => child.file && !child.file.disabled);
-				const newState = anyEnabled; // If any child is enabled, disable all; else enable all
+				const newState = anyEnabled;
 				element.children.forEach(child => {
 					if (child.file) {
 						child.file.disabled = newState;
