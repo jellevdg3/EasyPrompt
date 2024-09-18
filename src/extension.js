@@ -1,9 +1,6 @@
-// src/extension.js
 const vscode = require('vscode');
 const FileListProvider = require('./providers/fileListProvider');
 const DragAndDropController = require('./controllers/dragAndDropController');
-
-// Import command registrations
 const registerCommands = require('./commands/index');
 
 function activate(context) {
@@ -11,15 +8,16 @@ function activate(context) {
 
 	const fileListProvider = new FileListProvider();
 
-	// Define the drag and drop controller
 	const dragAndDrop = {
 		dragMimeTypes: ['application/vnd.code.tree.fileListView'],
 		dropMimeTypes: [
-			'application/vnd.code.tree.fileListView', // Internal drops
-			'text/uri-list'                           // External drops (e.g., from Explorer)
+			'application/vnd.code.tree.fileListView',
+			'text/uri-list'
 		],
-		handleDrag: (sourceElements, dataTransfer, token) => DragAndDropController.handleDrag(fileListProvider, sourceElements, dataTransfer, token),
-		handleDrop: (targetElement, dataTransfer, token) => DragAndDropController.handleDrop(fileListProvider, targetElement, dataTransfer, token)
+		handleDrag: (sourceElements, dataTransfer, token) =>
+			DragAndDropController.handleDrag(fileListProvider, sourceElements, dataTransfer, token),
+		handleDrop: (targetElement, dataTransfer, token) =>
+			DragAndDropController.handleDrop(fileListProvider, targetElement, dataTransfer, token)
 	};
 
 	const treeView = vscode.window.createTreeView('fileListView', {

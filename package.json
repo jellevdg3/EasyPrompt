@@ -4,7 +4,7 @@
   "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
   "publisher": "jellevdg3",
   "icon": "images/icon.png",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -52,6 +52,11 @@
       {
         "command": "fileListManager.toggleFile",
         "title": "Toggle Enable/Disable"
+      },
+      {
+        "command": "fileListManager.pasteCode",
+        "title": "Paste Code",
+        "category": "Code Prompt Generator"
       }
     ],
     "menus": {
@@ -76,6 +81,24 @@
           "group": "navigation",
           "title": "Copy Prompt",
           "icon": "copy"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "fileListManager.addFiles",
+          "when": "fileListViewIsFocused"
+        },
+        {
+          "command": "fileListManager.copyPrompt",
+          "when": "fileListViewIsFocused"
+        },
+        {
+          "command": "fileListManager.clearFiles",
+          "when": "fileListViewIsFocused"
+        },
+        {
+          "command": "fileListManager.toggleFile",
+          "when": "fileListViewIsFocused"
         }
       ]
     },
