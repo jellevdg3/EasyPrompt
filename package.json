@@ -4,7 +4,7 @@
   "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
   "publisher": "jellevdg3",
   "icon": "images/icon.png",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "engines": {
     "vscode": "^1.93.0"
   },
@@ -58,6 +58,10 @@
       {
         "command": "fileListManager.toggleFile",
         "title": "Toggle Enable/Disable"
+      },
+      {
+        "command": "fileListManager.removeFile",
+        "title": "Remove File"
       }
     ],
     "menus": {
@@ -84,6 +88,15 @@
           "icon": "copy"
         }
       ],
+      "view/item/context": [
+        {
+          "command": "fileListManager.removeFile",
+          "when": "view == fileListView && (viewItem == enabledFile || viewItem == disabledFile)",
+          "group": "inline",
+          "title": "Remove File",
+          "icon": "trash"
+        }
+      ],
       "commandPalette": [
         {
           "command": "fileListManager.addFiles",
@@ -99,6 +112,10 @@
         },
         {
           "command": "fileListManager.toggleFile",
+          "when": "fileListViewIsFocused"
+        },
+        {
+          "command": "fileListManager.removeFile",
           "when": "fileListViewIsFocused"
         }
       ]

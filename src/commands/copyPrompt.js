@@ -102,7 +102,8 @@ function registerCommand(fileListProvider) {
 
 				fileContent = lines.slice(i).join('\n');
 
-				prompt += `--- ${file.path} ---\n\`\`\`\n${fileContent}\n\`\`\`\n\n`;
+				//prompt += `--- ${file.path} ---\n\`\`\`\n${fileContent}\n\`\`\`\n\n`;
+				prompt += `\`\`\`// ${file.path}\n${fileContent}\n\`\`\`\n\n`;
 			} catch (error) {
 				console.error(`Error reading file ${file.path}: ${error}`);
 				vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);

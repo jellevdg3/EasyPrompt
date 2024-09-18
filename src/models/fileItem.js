@@ -1,5 +1,3 @@
-// src/models/fileItem.js
-
 const vscode = require('vscode');
 const path = require('path');
 

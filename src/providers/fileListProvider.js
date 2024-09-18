@@ -1,5 +1,3 @@
-// src/providers/fileListProvider.js
-
 const path = require('path');
 const vscode = require('vscode');
 const { PlaceholderTreeItem } = require('../models/placeholderTreeItem');
@@ -146,19 +144,78 @@ class FileListProvider {
 			}
 		} else if (element instanceof FolderItem) {
 			if (element.children && element.children.length > 0) {
-				const anyEnabled = element.children.some(child => child.file && !child.file.disabled);
-				const newState = anyEnabled;
-				element.children.forEach(child => {
-					if (child.file) {
-						child.file.disabled = newState;
+				// Determine the new state based on the current state of the first child
+				const newState = element.children.some(child => {
+					if (child instanceof FileItem) {
+						return child.file && !child.file.disabled;
+					} else if (child instanceof FolderItem) {
+						// For folders, check if any of their descendants are enabled
+						return this.hasEnabledFiles(child);
 					}
+					return false;
 				});
+
+				// Recursively toggle all descendant files
+				this.toggleFolderChildren(element, newState);
+
 				this.refresh();
 			} else {
 				vscode.window.showErrorMessage('Unable to toggle folder: No children found.');
 			}
 		} else {
 			vscode.window.showErrorMessage('Unable to toggle element: Unrecognized element type.');
+		}
+	}
+
+	/**
+	 * Recursively checks if a folder or any of its subfolders have enabled files.
+	 * @param {FolderItem} folder 
+	 * @returns {boolean}
+	 */
+	hasEnabledFiles(folder) {
+		for (const child of folder.children) {
+			if (child instanceof FileItem) {
+				if (child.file && !child.file.disabled) {
+					return true;
+				}
+			} else if (child instanceof FolderItem) {
+				if (this.hasEnabledFiles(child)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Recursively toggles all descendant files of a folder.
+	 * @param {FolderItem} folder 
+	 * @param {boolean} newState 
+	 */
+	toggleFolderChildren(folder, newState) {
+		for (const child of folder.children) {
+			if (child instanceof FileItem) {
+				if (child.file) {
+					child.file.disabled = newState;
+				}
+			} else if (child instanceof FolderItem) {
+				this.toggleFolderChildren(child, newState);
+			}
+		}
+	}
+
+	/**
+	 * Removes a file from the list based on its path.
+	 * @param {string} filePath 
+	 */
+	removeFile(filePath) {
+		const index = this.files.findIndex(f => f.path === filePath);
+		if (index !== -1) {
+			this.files.splice(index, 1);
+			this.refresh();
+			vscode.window.showInformationMessage(`File removed: ${filePath}`);
+		} else {
+			vscode.window.showErrorMessage(`File not found: ${filePath}`);
 		}
 	}
 }
