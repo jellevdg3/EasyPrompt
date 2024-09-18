@@ -1,53 +1,15 @@
+// src/providers/fileListProvider.js
 const vscode = require('vscode');
 const path = require('path');
-const fs = require('fs');
+const { PlaceholderTreeItem } = require('../models/placeholderTreeItem');
+const { FolderItem } = require('../models/folderItem');
+const { FileItem } = require('../models/fileItem');
+const pathUtils = require('../utils/pathUtils');
 
 /**
- * Placeholder TreeItem displayed when no files are present.
+ * @class FileListProvider
+ * Provides the data for the file list tree view.
  */
-class PlaceholderTreeItem extends vscode.TreeItem {
-	constructor() {
-		super('Drag files here to start', vscode.TreeItemCollapsibleState.None);
-		this.contextValue = 'placeholder';
-		this.description = '';
-		// Optional: Make it non-selectable
-		this.command = undefined;
-	}
-}
-
-class FolderItem extends vscode.TreeItem {
-	constructor(label, collapsibleState, children = []) {
-		super(label, collapsibleState);
-		this.contextValue = 'folderItem';
-		this.children = children;
-		this.iconPath = new vscode.ThemeIcon('folder'); // Using a built-in icon
-		this.command = {
-			command: 'fileListManager.toggleFile',
-			title: 'Toggle Enable/Disable',
-			arguments: [this]
-		};
-		// Determine if all child files are disabled to set folder color
-		const allChildrenDisabled = children.length > 0 && children.every(child => child.file && child.file.disabled);
-		this.color = allChildrenDisabled ? 'gray' : undefined;
-	}
-}
-
-class FileItem extends vscode.TreeItem {
-	constructor(label, file, collapsibleState = vscode.TreeItemCollapsibleState.None) {
-		super(label, collapsibleState);
-		this.contextValue = file.disabled ? 'disabledFile' : 'enabledFile';
-		this.tooltip = file.path;
-		this.file = file; // Store the file object for reference
-		this.iconPath = new vscode.ThemeIcon(file.disabled ? 'circle-slash' : 'file'); // Dynamic icon based on state
-		this.command = {
-			command: 'fileListManager.toggleFile',
-			title: 'Toggle Enable/Disable',
-			arguments: [this]
-		};
-		this.color = file.disabled ? 'gray' : undefined;
-	}
-}
-
 class FileListProvider {
 	constructor() {
 		this.files = [];
@@ -147,7 +109,7 @@ class FileListProvider {
 			}
 			try {
 				const relativePath = path.relative(basePath, filePath);
-				const normalizedPath = relativePath.split(path.sep).join('/');
+				const normalizedPath = pathUtils.normalizePath(relativePath);
 				if (!this.files.find(f => f.path === normalizedPath)) {
 					this.files.push({ path: normalizedPath, disabled: false });
 				} else {
@@ -160,7 +122,6 @@ class FileListProvider {
 		}
 		this.refresh();
 	}
-
 
 	clearFiles() {
 		this.files = [];
@@ -192,53 +153,6 @@ class FileListProvider {
 		} else {
 			vscode.window.showErrorMessage('Unable to toggle element: Unrecognized element type.');
 		}
-	}
-
-	// Drag and Drop Methods
-	async handleDrag(sourceElements, dataTransfer, token) {
-		if (!Array.isArray(sourceElements)) {
-			console.warn('handleDrag: sourceElements is not an array:', sourceElements);
-			return [];
-		}
-		return sourceElements.map(el => el.file && el.file.path ? el.file.path : null).filter(path => path !== null);
-	}
-
-	async handleDrop(targetElement, dataTransfer, _token) {
-		try {
-			const textUriList = await dataTransfer.get('text/uri-list');
-			let uris = [];
-
-			if (textUriList && typeof textUriList.value === 'string') {
-				uris = textUriList.value.split(/\r?\n/).filter(line => line.trim() !== '');
-			}
-
-			const filePaths = uris.map(uri => {
-				try {
-					const parsedUri = vscode.Uri.parse(uri);
-					return parsedUri.fsPath;
-				} catch (e) {
-					console.error(`Invalid URI: ${uri}`, e);
-					return null;
-				}
-			}).filter(path => path !== null);
-
-			if (filePaths.length > 0) {
-				await this.addFiles(filePaths);
-			}
-
-			// Handle internal drop if needed
-			const internalData = await dataTransfer.get('application/vnd.code.tree.fileListView');
-			if (internalData) {
-				console.log("Internal drop data:", internalData);
-				// Process internal data as required
-			}
-
-		} catch (error) {
-			console.error(`Error handling drop: ${error}`);
-			vscode.window.showErrorMessage(`Failed to handle drop: ${error}`);
-		}
-
-		this.refresh();
 	}
 }
 
