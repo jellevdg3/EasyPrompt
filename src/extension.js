@@ -1,4 +1,3 @@
-// File: ../../Dev/CodePromptGenerator/src/extension.js
 const vscode = require('vscode');
 const FileListProvider = require('./fileListProvider');
 
@@ -30,9 +29,9 @@ function activate(context) {
 		dragAndDropController: dragAndDropController
 	});
 
-	// Command to open the File List Manager
+	// Command to open the Code Prompt Generator Window
 	let openCommand = vscode.commands.registerCommand('fileListManager.openFileList', () => {
-		vscode.commands.executeCommand('workbench.view.extension.fileListManager');
+		vscode.commands.executeCommand('workbench.view.extension.codePromptGenerator'); // Updated container ID
 	});
 
 	// Command to add files
@@ -54,10 +53,30 @@ function activate(context) {
 
 	// Command to copy prompt
 	let copyPromptCommand = vscode.commands.registerCommand('fileListManager.copyPrompt', async () => {
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (!workspaceFolders || workspaceFolders.length === 0) {
+			vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace folder to generate the prompt.');
+			return;
+		}
+
 		const activeFiles = fileListProvider.files.filter(file => !file.disabled);
+		if (activeFiles.length === 0) {
+			vscode.window.showInformationMessage('No active files to generate the prompt.');
+			return;
+		}
+
 		let prompt = '';
 		for (const file of activeFiles) {
-			prompt += `// File: ${file.path}\n${file.content}\n\n`;
+			try {
+				const fileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, file.path);
+				const content = await vscode.workspace.fs.readFile(fileUri);
+				const decoder = new TextDecoder('utf-8');
+				const fileContent = decoder.decode(content);
+				prompt += `--- ${file.path} ---\n\`\`\`${fileContent}\`\`\`\n\n`;
+			} catch (error) {
+				console.error(`Error reading file ${file.path}: ${error}`);
+				vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);
+			}
 		}
 		await vscode.env.clipboard.writeText(prompt);
 		vscode.window.showInformationMessage('Prompt copied to clipboard!');

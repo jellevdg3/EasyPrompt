@@ -1,4 +1,3 @@
-// File: ../../Dev/CodePromptGenerator/src/fileListProvider.js
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
@@ -147,23 +146,21 @@ class FileListProvider {
 				continue;
 			}
 			try {
-				const content = await fs.promises.readFile(filePath, 'utf8');
 				const relativePath = path.relative(basePath, filePath);
-				// Normalize path separators to '/'
 				const normalizedPath = relativePath.split(path.sep).join('/');
-				// Avoid duplicates
 				if (!this.files.find(f => f.path === normalizedPath)) {
-					this.files.push({ path: normalizedPath, content: content, disabled: false });
+					this.files.push({ path: normalizedPath, disabled: false });
 				} else {
 					console.info(`File already exists in the list: ${normalizedPath}`);
 				}
 			} catch (error) {
-				console.error(`Error reading file ${filePath}: ${error}`);
-				vscode.window.showErrorMessage(`Failed to read file: ${filePath}`);
+				console.error(`Error processing file ${filePath}: ${error}`);
+				vscode.window.showErrorMessage(`Failed to process file: ${filePath}`);
 			}
 		}
 		this.refresh();
 	}
+
 
 	clearFiles() {
 		this.files = [];
