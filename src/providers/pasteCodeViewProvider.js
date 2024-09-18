@@ -357,6 +357,24 @@ class PasteCodeViewProvider {
 			this.view.webview.postMessage({
 				command: 'clearFields'
 			});
+
+			// **New Code Starts Here**
+
+			// Open the newly created file in the editor
+			const document = await vscode.workspace.openTextDocument(fileUri);
+			const editor = await vscode.window.showTextDocument(document);
+
+			// Wait for the editor to be ready
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			// Execute the format command on the active editor
+			await vscode.commands.executeCommand('editor.action.formatDocument');
+
+			// Save the formatted document
+			await document.save();
+
+			// **New Code Ends Here**
+
 		} catch (error) {
 			console.error(`Error writing file ${filePathToUse}: ${error}`);
 			vscode.window.showErrorMessage(`Failed to write file: ${filePathToUse}`);
