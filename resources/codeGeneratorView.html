@@ -26,7 +26,7 @@
 		.section {
 			width: 100%;
 			max-width: 600px;
-			margin-bottom: 20px;
+			margin-bottom: 0px;
 		}
 
 		label {
@@ -39,7 +39,7 @@
 		textarea {
 			width: 100%;
 			padding: 10px;
-			margin-bottom: 15px;
+			margin-bottom: 5px;
 			background-color: #2d2d2d;
 			color: #ffffff;
 			border: 1px solid #444444;
@@ -283,6 +283,17 @@
 		});
 
 		/**
+		 * Sends the appendLine value to the extension whenever it changes.
+		 */
+		appendLineInput.addEventListener('input', () => {
+			const appendLine = appendLineInput.value;
+			vscode.postMessage({
+				command: 'saveAppendLine',
+				appendLine: appendLine
+			});
+		});
+
+		/**
 		 * Receives messages from the extension backend.
 		 */
 		window.addEventListener('message', event => {
@@ -315,6 +326,9 @@
 					break;
 				case 'writeToFileFailure':
 					showWriteFailure();
+					break;
+				case 'setAppendLine': // New case for setting append line
+					appendLineInput.value = message.appendLine || '';
 					break;
 			}
 		});

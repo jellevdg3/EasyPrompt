@@ -18,6 +18,7 @@ class CodeGeneratorViewProvider {
 		this.context = context;
 		this.fileListProvider = fileListProvider; // Store the reference
 		this.view = null;
+		this.APPEND_LINE_KEY = 'codeGenerator.appendLine'; // Storage key for append line
 	}
 
 	/**
@@ -64,6 +65,13 @@ class CodeGeneratorViewProvider {
 
 		webviewView.webview.html = await this.getHtmlForWebview(webviewView.webview);
 
+		// Send the stored appendLine value to the webview
+		const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
+		webviewView.webview.postMessage({
+			command: 'setAppendLine',
+			appendLine: storedAppendLine
+		});
+
 		// Handle messages from the webview
 		webviewView.webview.onDidReceiveMessage(
 			async message => {
@@ -77,11 +85,27 @@ class CodeGeneratorViewProvider {
 					case 'copyPrompt':
 						await this.handleCopyPrompt(message.appendLine);
 						break;
+					case 'saveAppendLine': // New case for saving append line
+						await this.saveAppendLine(message.appendLine);
+						break;
 				}
 			},
 			undefined,
 			this.context.subscriptions
 		);
+	}
+
+	/**
+	 * Saves the append line to global state.
+	 * @param {string} appendLine 
+	 */
+	async saveAppendLine(appendLine) {
+		try {
+			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
+		} catch (error) {
+			console.error(`Error saving appendLine: ${error}`);
+			vscode.window.showErrorMessage('Failed to save the append line.');
+		}
 	}
 
 	/**
