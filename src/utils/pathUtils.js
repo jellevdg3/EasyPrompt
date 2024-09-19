@@ -1,5 +1,16 @@
 const path = require('path');
 
+// Define regex patterns
+const FILE_PATH_REGEXES = [
+	/^\/\/\s*(.+)$/i,                   // Matches // path/to/file
+	/^#\s*(.+)$/i,                      // Matches # path/to/file (Python, Shell, etc.)
+	/^<!--\s*(.+)\s*-->/i,              // Matches <!-- path/to/file -->
+	/^\/\*\s*(.+)\s*\*\/$/i,            // Matches /* path/to/file */
+	/^;\s*(.+)$/i,                      // Matches ; path/to/file (Lisp/Scheme)
+	/^%\s*(.+)$/i,                      // Matches % path/to/file (MATLAB, Prolog)
+	/^---\s*(.+)\s*---$/i                // Matches --- path/to/file ---
+];
+
 /**
  * Normalizes a file path to use forward slashes.
  * @param {string} p 
@@ -11,9 +22,6 @@ function normalizePath(p) {
 
 /**
  * Extracts the file path from the first line(s) of the content.
- * It looks for lines like:
- * // src/commands/copyPrompt.js
- * --- src/commands/copyPrompt.js ---
  * @param {string} content
  * @returns {string|null} The extracted file path or null if not found.
  */
@@ -26,13 +34,7 @@ function extractFilePathFromContent(content) {
 			continue;
 		}
 
-		// Check for patterns (case-insensitive)
-		const regexes = [
-			/^\/\/\s*(.+)$/i,            // Matches // path/to/file
-			/^---\s*(.+)\s*---$/i        // Matches --- path/to/file ---
-		];
-
-		for (const regex of regexes) {
+		for (const regex of FILE_PATH_REGEXES) {
 			const match = line.match(regex);
 			if (match) {
 				const filePath = match[1].trim();
@@ -49,5 +51,6 @@ function extractFilePathFromContent(content) {
 
 module.exports = {
 	normalizePath,
-	extractFilePathFromContent
+	extractFilePathFromContent,
+	FILE_PATH_REGEXES // Exporting for reuse
 };

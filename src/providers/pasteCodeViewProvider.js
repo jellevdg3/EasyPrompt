@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
-const { extractFilePathFromContent, normalizePath } = require('../utils/pathUtils');
+const { extractFilePathFromContent, normalizePath, FILE_PATH_REGEXES } = require('../utils/pathUtils');
 
 class PasteCodeViewProvider {
 	/**
@@ -422,13 +422,7 @@ class PasteCodeViewProvider {
 				continue;
 			}
 
-			// Check for patterns (case-insensitive)
-			const regexes = [
-				/^\/\/\s*(.+)$/i,            // Matches // path/to/file
-				/^---\s*(.+)\s*---$/i        // Matches --- path/to/file ---
-			];
-
-			for (const regex of regexes) {
+			for (const regex of FILE_PATH_REGEXES) {
 				const match = line.match(regex);
 				if (match) {
 					// Remove this line
