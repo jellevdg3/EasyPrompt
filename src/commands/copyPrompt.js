@@ -109,7 +109,6 @@ function registerCommand(fileListProvider) {
 			}
 		}
 		await vscode.env.clipboard.writeText(prompt);
-		vscode.window.showInformationMessage('Prompt copied to clipboard!');
 	});
 }
 

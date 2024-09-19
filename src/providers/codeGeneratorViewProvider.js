@@ -93,6 +93,9 @@ class CodeGeneratorViewProvider {
 		const workspaceFolders = vscode.workspace.workspaceFolders;
 		if (!workspaceFolders || workspaceFolders.length === 0) {
 			vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace folder to paste the code.');
+			this.view.webview.postMessage({
+				command: 'writeToFileFailure'
+			});
 			return;
 		}
 
@@ -108,11 +111,17 @@ class CodeGeneratorViewProvider {
 				field: 'filePath',
 				message: 'File path cannot be empty.'
 			});
+			this.view.webview.postMessage({
+				command: 'writeToFileFailure'
+			});
 			return;
 		}
 
 		if (!codeContent) {
 			vscode.window.showErrorMessage('Code content cannot be empty.');
+			this.view.webview.postMessage({
+				command: 'writeToFileFailure'
+			});
 			return;
 		}
 
@@ -158,9 +167,6 @@ class CodeGeneratorViewProvider {
 			// Write the content to the file
 			await vscode.workspace.fs.writeFile(fileUri, contentBytes);
 
-			// Inform the user of success
-			vscode.window.showInformationMessage(`Code pasted successfully to ${filePathToUse}!`);
-
 			// Clear the fields in the webview
 			this.view.webview.postMessage({
 				command: 'clearFields'
@@ -183,9 +189,18 @@ class CodeGeneratorViewProvider {
 
 			// **New Code Ends Here**
 
+			// Send success message to webview
+			this.view.webview.postMessage({
+				command: 'writeToFileSuccess'
+			});
+
 		} catch (error) {
 			console.error(`Error writing file ${filePathToUse}: ${error}`);
 			vscode.window.showErrorMessage(`Failed to write file: ${filePathToUse}`);
+			// Send failure message to webview
+			this.view.webview.postMessage({
+				command: 'writeToFileFailure'
+			});
 		}
 	}
 
@@ -356,7 +371,6 @@ class CodeGeneratorViewProvider {
 			}
 
 			await vscode.env.clipboard.writeText(prompt);
-			vscode.window.showInformationMessage('Prompt copied to clipboard!');
 			this.view.webview.postMessage({
 				command: 'copyPromptSuccess'
 			});
