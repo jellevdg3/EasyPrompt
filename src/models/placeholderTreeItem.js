@@ -1,10 +1,10 @@
-// src/models/placeholderTreeItem.js
 const vscode = require('vscode');
 
 /**
- * @class PlaceholderTreeItem
+ * @filePath src/models/placeholderTreeItem.js
  * Represents a placeholder when no files are present.
  */
+
 class PlaceholderTreeItem extends vscode.TreeItem {
 	constructor() {
 		super('Drag files here to start', vscode.TreeItemCollapsibleState.None);

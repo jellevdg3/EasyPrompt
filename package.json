@@ -1,163 +1,159 @@
 {
-  "name": "code-prompt-generator",
-  "displayName": "Code Prompt Generator",
-  "description": "Manage a list of files and allows for generating a GPT prompt with a single click",
-  "publisher": "jellevdg3",
-  "icon": "images/icon.png",
-  "version": "0.0.12",
-  "engines": {
-    "vscode": "^1.93.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
-  "main": "./src/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "codePromptGenerator",
-          "title": "Code Prompt Generator",
-          "icon": "resources/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "codePromptGenerator": [
-        {
-          "id": "fileListView",
-          "name": "Files",
-          "icon": "resources/icon.svg"
-        },
-        {
-          "id": "pasteCodeView",
-          "name": "Paste Code",
-          "type": "webview",
-          "icon": "resources/paste-icon.svg"
-        }
-      ]
-    },
-    "commands": [
-      {
-        "command": "fileListManager.openFileList",
-        "title": "Open Code Prompt Generator Window"
-      },
-      {
-        "command": "fileListManager.addFiles",
-        "title": "Add Files"
-      },
-      {
-        "command": "fileListManager.copyPrompt",
-        "title": "Copy Prompt"
-      },
-      {
-        "command": "fileListManager.clearFiles",
-        "title": "Clear Files"
-      },
-      {
-        "command": "fileListManager.toggleFile",
-        "title": "Toggle Enable/Disable"
-      },
-      {
-        "command": "fileListManager.removeFile",
-        "title": "Remove File"
-      }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "fileListManager.addFiles",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Add Files",
-          "icon": "add"
-        },
-        {
-          "command": "fileListManager.clearFiles",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Clear Files",
-          "icon": "trash"
-        },
-        {
-          "command": "fileListManager.copyPrompt",
-          "when": "view == fileListView",
-          "group": "navigation",
-          "title": "Copy Prompt",
-          "icon": "copy"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "fileListManager.removeFile",
-          "when": "view == fileListView && (viewItem == enabledFile || viewItem == disabledFile)",
-          "group": "inline",
-          "title": "Remove File",
-          "icon": "trash"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "fileListManager.addFiles",
-          "when": "fileListViewIsFocused"
-        },
-        {
-          "command": "fileListManager.copyPrompt",
-          "when": "fileListViewIsFocused"
-        },
-        {
-          "command": "fileListManager.clearFiles",
-          "when": "fileListViewIsFocused"
-        },
-        {
-          "command": "fileListManager.toggleFile",
-          "when": "fileListViewIsFocused"
-        },
-        {
-          "command": "fileListManager.removeFile",
-          "when": "fileListViewIsFocused"
-        }
-      ]
-    },
-    "keybindings": [
-      {
-        "command": "fileListManager.openFileList",
-        "key": "ctrl+alt+f",
-        "when": "editorTextFocus"
-      }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Code Prompt Generator Configuration",
-      "properties": {
-        "codePromptGenerator.someSetting": {
-          "type": "string",
-          "default": "defaultValue",
-          "description": "A sample configuration setting for the Code Prompt Generator."
-        }
-      }
-    }
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.93.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "eslint": "^9.9.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jellevdg3/CodePromptGenerator.git"
-  },
-  "license": "MIT",
-  "dependencies": {
-    "vsce": "^2.15.0"
-  }
+	"name": "code-prompt-generator",
+	"displayName": "Code Prompt Generator",
+	"description": "Manage a list of files and allows for generating a GPT prompt with a single click",
+	"publisher": "jellevdg3",
+	"icon": "images/icon.png",
+	"version": "0.0.12",
+	"engines": {
+		"vscode": "^1.93.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onView:codeGeneratorView",
+		"onCommand:fileListManager.*"
+	],
+	"main": "./src/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "codePromptGenerator",
+					"title": "Code Prompt Generator",
+					"icon": "resources/icon.svg"
+				}
+			]
+		},
+		"views": {
+			"codePromptGenerator": [
+				{
+					"id": "fileListView",
+					"name": "Files",
+					"icon": "resources/icon.svg"
+				},
+				{
+					"id": "codeGeneratorView",
+					"name": "Code Generator",
+					"type": "webview",
+					"icon": "resources/paste-icon.svg"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "fileListManager.openFileList",
+				"title": "Open Code Prompt Generator Window"
+			},
+			{
+				"command": "fileListManager.addFiles",
+				"title": "Add Files"
+			},
+			{
+				"command": "fileListManager.copyPrompt",
+				"title": "Copy Prompt"
+			},
+			{
+				"command": "fileListManager.clearFiles",
+				"title": "Clear Files"
+			},
+			{
+				"command": "fileListManager.toggleFile",
+				"title": "Toggle Enable/Disable"
+			},
+			{
+				"command": "fileListManager.removeFile",
+				"title": "Remove File"
+			}
+		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "fileListManager.addFiles",
+					"when": "view == fileListView",
+					"group": "navigation",
+					"title": "Add Files",
+					"icon": "add"
+				},
+				{
+					"command": "fileListManager.clearFiles",
+					"when": "view == fileListView",
+					"group": "navigation",
+					"title": "Clear Files",
+					"icon": "trash"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "fileListManager.removeFile",
+					"when": "view == fileListView && (viewItem == enabledFile || viewItem == disabledFile)",
+					"group": "inline",
+					"title": "Remove File",
+					"icon": "trash"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "fileListManager.addFiles",
+					"when": "fileListViewIsFocused"
+				},
+				{
+					"command": "fileListManager.copyPrompt",
+					"when": "fileListViewIsFocused"
+				},
+				{
+					"command": "fileListManager.clearFiles",
+					"when": "fileListViewIsFocused"
+				},
+				{
+					"command": "fileListManager.toggleFile",
+					"when": "fileListViewIsFocused"
+				},
+				{
+					"command": "fileListManager.removeFile",
+					"when": "fileListViewIsFocused"
+				}
+			]
+		},
+		"keybindings": [
+			{
+				"command": "fileListManager.openFileList",
+				"key": "ctrl+alt+f",
+				"when": "editorTextFocus"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "Code Prompt Generator Configuration",
+			"properties": {
+				"codePromptGenerator.someSetting": {
+					"type": "string",
+					"default": "defaultValue",
+					"description": "A sample configuration setting for the Code Prompt Generator."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"pretest": "npm run lint",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/mocha": "^10.0.7",
+		"@types/node": "20.x",
+		"@types/vscode": "^1.93.0",
+		"@vscode/test-cli": "^0.0.10",
+		"@vscode/test-electron": "^2.4.1",
+		"eslint": "^9.9.1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jellevdg3/CodePromptGenerator.git"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"vsce": "^2.15.0"
+	}
 }

@@ -1,5 +1,9 @@
-// src/commands/addFiles.js
 const vscode = require('vscode');
+
+/**
+ * @filePath src/commands/addFiles.js
+ * Handles the "Add Files" command.
+ */
 
 /**
  * Handles the "Add Files" command.

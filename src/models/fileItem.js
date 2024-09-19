@@ -2,9 +2,10 @@ const vscode = require('vscode');
 const path = require('path');
 
 /**
- * @class FileItem
+ * @filePath src/models/fileItem.js
  * Represents a file in the tree view.
  */
+
 class FileItem extends vscode.TreeItem {
 	/**
 	 * 

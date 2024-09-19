@@ -1,5 +1,9 @@
-// src/commands/clearFiles.js
 const vscode = require('vscode');
+
+/**
+ * @filePath src/commands/clearFiles.js
+ * Handles the "Clear Files" command.
+ */
 
 /**
  * Handles the "Clear Files" command.

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background-color: #1e1e1e; /* Dark background for the webview */
+            color: #ffffff; /* Default text color */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #ffffff;
+            text-align: center;
+        }
+        .section {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 0px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="checkbox"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #2d2d2d; /* Medium gray background */
+            color: #ffffff; /* White text */
+            border: 1px solid #444444;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            resize: vertical;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #2d2d2d; /* Medium gray background */
+            color: #ffffff; /* White text */
+            border: 1px solid #444444;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        textarea::placeholder {
+            color: #aaaaaa;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4d4d4d; /* Flat light gray */
+            color: #ffffff; /* White text */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            max-width: 300px;
+        }
+        button:hover {
+            background-color: #666666; /* Slightly darker on hover */
+        }
+        button:active {
+            background-color: #555555; /* Even darker when clicked */
+        }
+        .copy-button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ffffff;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 18px;
+            color: #ffffff;
+            cursor: pointer;
+            background-color: transparent;
+            transition: background-color 0.3s ease;
+        }
+        .checkbox.checked {
+            background-color: #4caf50;
+            display: flex;
+        }
+        .error-message {
+            color: #ff4d4d;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .error-message.visible {
+            display: block;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+        .append-line-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background-color: #2d2d2d; /* Medium gray background */
+            color: #ffffff; /* White text */
+            border: 1px solid #444444;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .auto-write-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .auto-write-container input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Code Generator</h2>
+
+    <div class="section copy-section">
+        <div class="copy-button-container">
+            <input type="text" id="appendLine" class="append-line-input" placeholder="Append this line to the prompt">
+            <button id="copyPromptButton">Copy Prompt</button>
+        </div>
+    </div>
+    
+    <div class="section paste-section">
+        <div class="error-message" id="errorMessage">File path cannot be empty.</div>
+
+        <label for="filePath">File Path:</label>
+        <input type="text" id="filePath" placeholder="e.g., src/components/MyComponent.js">
+
+        <label for="codeContent">Code:</label>
+        <textarea id="codeContent" placeholder="Paste your code here, including the file path in the first line..."></textarea>
+        <button id="writeToFileButton" onclick="writeToFile()">Write to File</button>
+        
+        <div class="auto-write-container">
+            <input type="checkbox" id="autoWriteCheckbox">
+            <label for="autoWriteCheckbox" style="font-weight: normal;">Automatically write file on paste</label>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        const filePathInput = document.getElementById('filePath');
+        const codeContentTextarea = document.getElementById('codeContent');
+        const errorMessage = document.getElementById('errorMessage');
+        const copyPromptButton = document.getElementById('copyPromptButton');
+        const appendLineInput = document.getElementById('appendLine');
+        const autoWriteCheckbox = document.getElementById('autoWriteCheckbox');
+        const writeToFileButton = document.getElementById('writeToFileButton');
+
+        /**
+         * Writes the code to the specified file.
+         */
+        function writeToFile() {
+            const filePath = filePathInput.value.trim();
+            const codeContent = codeContentTextarea.value;
+
+            // Reset error states
+            resetErrors();
+
+            if (!filePath) {
+                showError('filePath');
+                showErrorMessage('File path cannot be empty.');
+                return;
+            }
+
+            vscode.postMessage({
+                command: 'writeCodeToFile',
+                filePath: filePath,
+                code: codeContent
+            });
+        }
+
+        /**
+         * Extracts the file path from the pasted code and populates the filePath input.
+         * Also removes the file path line from the code content.
+         */
+        codeContentTextarea.addEventListener('input', () => {
+            const codeContent = codeContentTextarea.value;
+            vscode.postMessage({
+                command: 'extractFilePath',
+                code: codeContent
+            });
+
+            // Check if auto-write is enabled and filePath is filled
+            if (autoWriteCheckbox.checked && filePathInput.value.trim()) {
+                writeToFile();
+            }
+        });
+
+        /**
+         * Receives messages from the extension backend.
+         */
+        window.addEventListener('message', event => {
+            const message = event.data;
+
+            switch (message.command) {
+                case 'populateFilePath':
+                    filePathInput.value = message.filePath || '';
+                    if (message.filePath) {
+                        // Remove the file path line from the code content
+                        codeContentTextarea.value = message.cleanedCode || '';
+                    }
+                    break;
+                case 'showError':
+                    showError(message.field);
+                    showErrorMessage(message.message);
+                    break;
+                case 'clearFields':
+                    filePathInput.value = '';
+                    codeContentTextarea.value = '';
+                    break;
+                case 'copyPromptSuccess':
+                    showCopySuccess();
+                    break;
+                case 'copyPromptFailure':
+                    vscode.window.showErrorMessage('Failed to copy prompt.');
+                    break;
+            }
+        });
+
+        /**
+         * Displays an error state on the specified field.
+         * @param {string} field 
+         */
+        function showError(field) {
+            if (field === 'filePath') {
+                filePathInput.classList.add('error', 'shake');
+                setTimeout(() => {
+                    filePathInput.classList.remove('shake');
+                }, 500);
+            }
+        }
+
+        /**
+         * Resets all error states.
+         */
+        function resetErrors() {
+            filePathInput.classList.remove('error');
+            codeContentTextarea.classList.remove('error');
+            errorMessage.classList.remove('visible');
+        }
+
+        /**
+         * Shows an error message.
+         * @param {string} message 
+         */
+        function showErrorMessage(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+        }
+
+        /**
+         * Handles the Copy Prompt button click.
+         */
+        copyPromptButton.addEventListener('click', () => {
+            const appendLine = appendLineInput.value.trim();
+            vscode.postMessage({
+                command: 'copyPrompt',
+                appendLine: appendLine
+            });
+        });
+
+        /**
+         * Shows the button text as a checkmark upon successful copy.
+         */
+        function showCopySuccess() {
+            const originalText = copyPromptButton.textContent;
+            copyPromptButton.textContent = '✓';
+            setTimeout(() => {
+                copyPromptButton.textContent = originalText;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

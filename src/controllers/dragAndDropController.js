@@ -1,10 +1,10 @@
-// src/controllers/dragAndDropController.js
 const vscode = require('vscode');
 
 /**
- * @class DragAndDropController
+ * @filePath src/controllers/dragAndDropController.js
  * Manages drag and drop operations for the tree view.
  */
+
 const DragAndDropController = {
 	async handleDrag(fileListProvider, sourceElements, dataTransfer, token) {
 		if (!Array.isArray(sourceElements)) {
@@ -28,7 +28,7 @@ const DragAndDropController = {
 					const parsedUri = vscode.Uri.parse(uri);
 					return parsedUri.fsPath;
 				} catch (e) {
-					console.error(`Invalid URI: ${uri}`, e);
+					console.error(`Invalid URI: \${uri}`, e);
 					return null;
 				}
 			}).filter(path => path !== null);
@@ -46,8 +46,8 @@ const DragAndDropController = {
 			}
 
 		} catch (error) {
-			console.error(`Error handling drop: ${error}`);
-			vscode.window.showErrorMessage(`Failed to handle drop: ${error}`);
+			console.error(`Error handling drop: \${error}`);
+			vscode.window.showErrorMessage(`Failed to handle drop: \${error}`);
 		}
 
 		fileListProvider.refresh();

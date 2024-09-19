@@ -1,5 +1,10 @@
 const path = require('path');
 
+/**
+ * @filePath src/utils/pathUtils.js
+ * Utility functions for path manipulation.
+ */
+
 // Define regex patterns
 const FILE_PATH_REGEXES = [
 	/^\/\/\s*(.+)$/i,                   // Matches // path/to/file

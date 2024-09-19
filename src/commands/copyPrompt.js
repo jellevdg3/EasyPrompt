@@ -1,14 +1,14 @@
-// src/commands/copyPrompt.js
 const vscode = require('vscode');
 const path = require('path');
 
 /**
+ * @filePath src/commands/copyPrompt.js
  * Handles the "Copy Prompt" command.
  *
- * @function
- * @param {Object} fileListProvider - The file list provider instance.
- * @returns {vscode.Disposable} - The disposable command.
+ * Note: This command is now primarily handled within the CodeGeneratorViewProvider.
+ * The command remains for backward compatibility or external invocation.
  */
+
 function registerCommand(fileListProvider) {
 	return vscode.commands.registerCommand('fileListManager.copyPrompt', async () => {
 		const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -26,7 +26,7 @@ function registerCommand(fileListProvider) {
 		let prompt = '';
 		for (const file of activeFiles) {
 			try {
-				const fileUri = vscode.Uri.joinPath(workspaceFolders[0].uri, file.path);
+				const fileUri = vscode.Uri.file(file.fullPath);
 				const content = await vscode.workspace.fs.readFile(fileUri);
 				const decoder = new TextDecoder('utf-8');
 				let fileContent = decoder.decode(content);
@@ -102,11 +102,10 @@ function registerCommand(fileListProvider) {
 
 				fileContent = lines.slice(i).join('\n');
 
-				//prompt += `--- ${file.path} ---\n\`\`\`\n${fileContent}\n\`\`\`\n\n`;
 				prompt += `\`\`\`// ${file.path}\n${fileContent}\n\`\`\`\n\n`;
 			} catch (error) {
-				console.error(`Error reading file ${file.path}: ${error}`);
-				vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);
+				console.error(`Error reading file ${file.path}: ${error} `);
+				vscode.window.showErrorMessage(`Failed to read file: ${file.path} `);
 			}
 		}
 		await vscode.env.clipboard.writeText(prompt);
