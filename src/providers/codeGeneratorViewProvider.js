@@ -391,7 +391,7 @@ class CodeGeneratorViewProvider {
 
 			// Append the additional line if provided
 			if (appendLine && appendLine.trim() !== '') {
-				prompt += appendLine.trim() + '\n';
+				prompt += appendLine.trim() + '\n\n\n';
 			}
 
 			await vscode.env.clipboard.writeText(prompt);

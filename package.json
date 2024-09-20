@@ -4,17 +4,14 @@
 	"description": "Manage a list of files and allows for generating a GPT prompt with a single click",
 	"publisher": "jellevdg3",
 	"icon": "images/icon.png",
-	"version": "0.0.14",
+	"version": "0.0.15",
 	"engines": {
 		"vscode": "^1.93.0"
 	},
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [
-		"onView:codeGeneratorView",
-		"onCommand:fileListManager.*"
-	],
+	"activationEvents": [],
 	"main": "./src/extension.js",
 	"contributes": {
 		"viewsContainers": {
@@ -49,10 +46,6 @@
 			{
 				"command": "fileListManager.addFiles",
 				"title": "Add Files"
-			},
-			{
-				"command": "fileListManager.copyPrompt",
-				"title": "Copy Prompt"
 			},
 			{
 				"command": "fileListManager.clearFiles",
@@ -96,10 +89,6 @@
 			"commandPalette": [
 				{
 					"command": "fileListManager.addFiles",
-					"when": "fileListViewIsFocused"
-				},
-				{
-					"command": "fileListManager.copyPrompt",
 					"when": "fileListViewIsFocused"
 				},
 				{
