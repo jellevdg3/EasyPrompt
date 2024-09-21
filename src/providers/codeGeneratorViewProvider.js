@@ -286,6 +286,27 @@ class CodeGeneratorViewProvider {
 		return content;
 	}
 
+	extractFilesAndCode(message) {
+		const result = [];
+
+		// Define a regex pattern to match each file section
+		const regex = /###\s+(.+?)\s+```javascript\s*([\s\S]*?)```/g;
+
+		let match;
+		while ((match = regex.exec(message)) !== null) {
+			const filePath = match[1].trim();
+			const code = match[2].trim();
+
+			if (filePath && code) {
+				result.push({ filePath, code });
+			} else {
+				console.warn('Incomplete section found:', match[0]);
+			}
+		}
+
+		return result;
+	}
+
 	/**
 	 * Handles the copyPrompt command from the webview.
 	 * @param {string} appendLine
@@ -382,7 +403,7 @@ class CodeGeneratorViewProvider {
 
 					const codeBlockChar = '`';
 					const codeBlockWord = `${codeBlockChar}${codeBlockChar}${codeBlockChar}`;
-					prompt += `${codeBlockWord}// ${file.path}\n${fileContent}\n${codeBlockWord}\n\n`;
+					prompt += `--- ${file.path} ---\n${codeBlockWord}${fileContent}\n${codeBlockWord}\n\n`;
 				} catch (error) {
 					console.error(`Error reading file ${file.path}: ${error} `);
 					vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);
