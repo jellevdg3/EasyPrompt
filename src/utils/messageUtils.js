@@ -10,6 +10,9 @@ const FILE_PATH_REGEXES = [
 	/^---\s*(.+)\s*---$/i
 ];
 
+// New: Patterns for Format 4
+const FORMAT4_REGEX = /---\s*\n\*\*(.+?)\*\*\s*\n```(\w+)?\s*\n([\s\S]*?)```/g;
+
 function normalizePath(p) {
 	return p.split(path.sep).join('/');
 }
@@ -99,30 +102,60 @@ function extractFilesAndCodeFormat3(message) {
 	return result;
 }
 
+function extractFilesAndCodeFormat4(message) {
+	const result = [];
+	let match;
+
+	while ((match = FORMAT4_REGEX.exec(message)) !== null) {
+		const filePath = match[1].trim();
+		const language = match[2] ? match[2].trim() : '';
+		const code = match[3].trim();
+
+		if (filePath && code) {
+			result.push({ filePath, language, code });
+		} else {
+			console.warn('Incomplete section found in Format 4:', match[0]);
+		}
+	}
+
+	return result;
+}
+
 function extractPathsAndCodeFromContent(content) {
-	let result = extractFilesAndCodeFormat3(content);
+	// Attempt to extract using Format 4 first
+	let result = extractFilesAndCodeFormat4(content);
 	if (result.length > 0) {
-		console.log('Format 3');
+		console.log('Format 4 detected and used');
 		return result;
 	}
 
+	// Then try Format 3
+	result = extractFilesAndCodeFormat3(content);
+	if (result.length > 0) {
+		console.log('Format 3 detected and used');
+		return result;
+	}
+
+	// Then try Format 2
 	result = extractFilesAndCodeFormat2(content);
 	if (result.length > 0) {
-		console.log('Format 2');
+		console.log('Format 2 detected and used');
 		return result;
 	}
 
+	// Then try Format 1
 	result = extractFilesAndCodeFormat1(content);
 	if (result.length > 0) {
-		console.log('Format 1');
+		console.log('Format 1 detected and used');
 		return result;
 	}
 
-	const path = extractFilePathFromContent(content);
+	// Fallback
+	const filePath = extractFilePathFromContent(content);
 	const code = content;
 
-	console.log('Format Fallback');
-	return [{ filePath: path, language: '', code }];
+	console.log('Using Fallback Format');
+	return [{ filePath, language: '', code }];
 }
 
 function removeFilePathLine(content) {
