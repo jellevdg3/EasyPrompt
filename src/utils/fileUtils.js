@@ -1,7 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
 const { extractFilePathFromContent, normalizePath } = require('./pathUtils');
-const codePrepUtils = require('./codePrepUtils');
 
 async function validateInput(filePathRaw, codeContentRaw, webviewView, context) {
 	const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -30,7 +29,7 @@ async function validateInput(filePathRaw, codeContentRaw, webviewView, context) 
 	return true;
 }
 
-async function prepareFile(filePathRaw, codeContentRaw, context) {
+function prepareFile(filePathRaw, codeContentRaw, context) {
 	const workspaceUri = vscode.workspace.workspaceFolders[0].uri;
 	let filePath = filePathRaw.trim();
 	let codeContent = codeContentRaw.trim();
@@ -80,7 +79,6 @@ async function writeFileContent(fileUri, content) {
 		await vscode.workspace.fs.stat(fileUri);
 		fileExists = true;
 	} catch (error) {
-		// File does not exist
 	}
 
 	const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));
