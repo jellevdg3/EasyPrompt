@@ -7,12 +7,9 @@ const pathUtils = require('../utils/messageUtils');
 const fs = require('fs').promises;
 
 class FileListProvider {
-	/**
-	 * @param {string} extensionPath - The root path of the extension
-	 */
 	constructor(extensionPath) {
 		this.files = [];
-		this.extensionPath = extensionPath; // Store the extension path
+		this.extensionPath = extensionPath;
 		this._onDidChangeTreeData = new vscode.EventEmitter();
 		this.onDidChangeTreeData = this._onDidChangeTreeData.event;
 	}
@@ -43,7 +40,6 @@ class FileListProvider {
 
 		files.forEach(file => {
 			if (!file || !file.path) {
-				console.warn('Encountered an undefined or malformed file object:', file);
 				return;
 			}
 			const parts = file.path.split('/');
@@ -68,12 +64,10 @@ class FileListProvider {
 				if (item.__isFile) {
 					const file = this.files.find(f => f.path === fullPath);
 					if (!file) {
-						console.error(`File not found for path: ${fullPath}`);
-						vscode.window.showErrorMessage(`Internal error: File not found for path "${fullPath}".`);
 						return new vscode.TreeItem(name);
 					}
 
-					const fileUri = vscode.Uri.file(file.fullPath); // Use absolute path
+					const fileUri = vscode.Uri.file(file.fullPath);
 					const label = file.disabled ? `${name}` : name;
 					const fileItem = new FileItem(label, file, fileUri, vscode.TreeItemCollapsibleState.None, this.extensionPath);
 					return fileItem;
@@ -111,7 +105,6 @@ class FileListProvider {
 
 		for (const filePath of filePaths) {
 			if (!filePath) {
-				console.warn('Encountered an undefined file path:', filePath);
 				continue;
 			}
 			try {
@@ -124,7 +117,6 @@ class FileListProvider {
 						if (!this.files.find(f => f.path === normalizedPath)) {
 							this.files.push({ path: normalizedPath, fullPath: file, disabled: false });
 						} else {
-							console.info(`File already exists in the list: ${normalizedPath}`);
 						}
 					}
 				} else if (stats.isFile()) {
@@ -132,11 +124,9 @@ class FileListProvider {
 					if (!this.files.find(f => f.path === normalizedPath)) {
 						this.files.push({ path: normalizedPath, fullPath: absolutePath, disabled: false });
 					} else {
-						console.info(`File already exists in the list: ${normalizedPath}`);
 					}
 				}
 			} catch (error) {
-				console.error(`Error processing file ${filePath}: ${error}`);
 				vscode.window.showErrorMessage(`Failed to process file: ${filePath}`);
 			}
 		}
@@ -168,38 +158,27 @@ class FileListProvider {
 				element.file.disabled = !element.file.disabled;
 				this.refresh();
 			} else {
-				vscode.window.showErrorMessage('Unable to toggle file: File object is undefined.');
 			}
 		} else if (element instanceof FolderItem) {
 			if (element.children && element.children.length > 0) {
-				// Determine the new state based on the current state of the first child
 				const newState = element.children.some(child => {
 					if (child instanceof FileItem) {
 						return child.file && !child.file.disabled;
 					} else if (child instanceof FolderItem) {
-						// For folders, check if any of their descendants are enabled
 						return this.hasEnabledFiles(child);
 					}
 					return false;
 				});
 
-				// Recursively toggle all descendant files
 				this.toggleFolderChildren(element, newState);
 
 				this.refresh();
 			} else {
-				vscode.window.showErrorMessage('Unable to toggle folder: No children found.');
 			}
 		} else {
-			vscode.window.showErrorMessage('Unable to toggle element: Unrecognized element type.');
 		}
 	}
 
-	/**
-	 * Recursively checks if a folder or any of its subfolders have enabled files.
-	 * @param {FolderItem} folder 
-	 * @returns {boolean}
-	 */
 	hasEnabledFiles(folder) {
 		for (const child of folder.children) {
 			if (child instanceof FileItem) {
@@ -215,11 +194,6 @@ class FileListProvider {
 		return false;
 	}
 
-	/**
-	 * Recursively toggles all descendant files of a folder.
-	 * @param {FolderItem} folder 
-	 * @param {boolean} newState 
-	 */
 	toggleFolderChildren(folder, newState) {
 		for (const child of folder.children) {
 			if (child instanceof FileItem) {
@@ -232,10 +206,6 @@ class FileListProvider {
 		}
 	}
 
-	/**
-	 * Removes a file from the list based on its path.
-	 * @param {string} filePath 
-	 */
 	removeFile(filePath) {
 		const index = this.files.findIndex(f => f.path === filePath);
 		if (index !== -1) {

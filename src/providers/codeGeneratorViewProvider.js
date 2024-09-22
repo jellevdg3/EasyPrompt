@@ -78,7 +78,6 @@ class CodeGeneratorViewProvider {
 				await writeFileContent(fileUri, codeContent);
 				await formatAndSaveFile(fileUri);
 			} catch (error) {
-				console.error(`Error writing file ${absolutePath}: ${error}`);
 				throw new Error(`Failed to write file: ${absolutePath}`);
 			}
 		});
@@ -108,7 +107,6 @@ class CodeGeneratorViewProvider {
 				cleanedCode: code
 			});
 		} else {
-			// No files detected
 		}
 	}
 
@@ -129,7 +127,6 @@ class CodeGeneratorViewProvider {
 				command: 'copyPromptSuccess'
 			});
 		} catch (error) {
-			console.error(`Error copying prompt: ${error}`);
 			vscode.window.showErrorMessage('Failed to copy prompt.');
 			this.view.webview.postMessage({
 				command: 'copyPromptFailure'
@@ -145,7 +142,6 @@ class CodeGeneratorViewProvider {
 		try {
 			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
 		} catch (error) {
-			console.error(`Error saving appendLine: ${error}`);
 			vscode.window.showErrorMessage('Failed to save the append line.');
 		}
 	}

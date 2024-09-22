@@ -61,7 +61,6 @@ async function writeFileContent(fileUri, content) {
 	try {
 		await vscode.workspace.fs.stat(fileUri);
 	} catch {
-		// File does not exist, proceed to create
 	}
 
 	const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));

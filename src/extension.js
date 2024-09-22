@@ -4,16 +4,11 @@ const DragAndDropController = require('./controllers/dragAndDropController');
 const registerCommands = require('./commands/index');
 const CodeGeneratorViewProvider = require('./providers/codeGeneratorViewProvider');
 
-/**
- * @filePath src/extension.js
- * Main entry point for the Code Prompt Generator extension.
- */
-
 function activate(context) {
 	console.log('Code Prompt Generator extension is now active!');
 
-	const extensionPath = context.extensionPath; // Get the extension's root path
-	const fileListProvider = new FileListProvider(extensionPath); // Initialize FileListProvider
+	const extensionPath = context.extensionPath;
+	const fileListProvider = new FileListProvider(extensionPath);
 
 	const dragAndDrop = {
 		dragMimeTypes: ['application/vnd.code.tree.fileListView'],
@@ -34,13 +29,11 @@ function activate(context) {
 		dragAndDropController: dragAndDrop
 	});
 
-	// Register all commands
 	const commands = registerCommands(fileListProvider);
 	context.subscriptions.push(...commands, treeView);
 
-	// Register the CodeGeneratorViewProvider
-	const codeGeneratorViewProvider = new CodeGeneratorViewProvider(context, fileListProvider); // Pass fileListProvider
-	codeGeneratorViewProvider.register('codeGeneratorView'); // Pass the new view ID
+	const codeGeneratorViewProvider = new CodeGeneratorViewProvider(context, fileListProvider);
+	codeGeneratorViewProvider.register('codeGeneratorView');
 	context.subscriptions.push(codeGeneratorViewProvider);
 }
 

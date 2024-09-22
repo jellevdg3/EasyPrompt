@@ -9,7 +9,6 @@ async function generatePrompt(activeFiles, appendLine) {
 			const processedContent = processFileContent(fileContent, file.path);
 			prompt += processedContent;
 		} catch (error) {
-			console.error(`Error reading file ${file.path}: ${error}`);
 			vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);
 		}
 	}

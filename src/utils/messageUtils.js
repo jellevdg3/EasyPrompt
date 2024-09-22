@@ -10,7 +10,6 @@ const FILE_PATH_REGEXES = [
 	/^---\s*(.+)\s*---$/i
 ];
 
-// New: Patterns for Format 4
 const FORMAT4_REGEX = /---\s*\n\*\*(.+?)\*\*\s*\n```(\w+)?\s*\n([\s\S]*?)```/g;
 
 function normalizePath(p) {
@@ -51,7 +50,6 @@ function extractFilesAndCodeFormat1(message) {
 		if (filePath && language && code) {
 			result.push({ filePath, language, code });
 		} else {
-			console.warn('Incomplete section found:', match[0]);
 		}
 	}
 
@@ -67,14 +65,11 @@ function extractFilesAndCodeFormat2(message) {
 		const language = match[1].trim();
 		let code = match[2].trim();
 
-		// Extract file path from the first line of the code
 		const filePath = extractFilePathFromContent(code);
 		if (filePath) {
-			// Remove the file path comment line from the code
 			code = removeFilePathLine(code);
 			result.push({ filePath, language, code });
 		} else {
-			console.warn('No file path found for this code block:', code);
 		}
 	}
 
@@ -95,7 +90,6 @@ function extractFilesAndCodeFormat3(message) {
 			const codeWithPath = "// " + filePath + "\n" + code;
 			result.push({ filePath, language, code: codeWithPath });
 		} else {
-			console.warn('Incomplete section found:', match[0]);
 		}
 	}
 
@@ -114,7 +108,6 @@ function extractFilesAndCodeFormat4(message) {
 		if (filePath && code) {
 			result.push({ filePath, language, code });
 		} else {
-			console.warn('Incomplete section found in Format 4:', match[0]);
 		}
 	}
 
@@ -122,39 +115,29 @@ function extractFilesAndCodeFormat4(message) {
 }
 
 function extractPathsAndCodeFromContent(content) {
-	// Attempt to extract using Format 4 first
 	let result = extractFilesAndCodeFormat4(content);
 	if (result.length > 0) {
-		console.log('Format 4 detected and used');
 		return result;
 	}
 
-	// Then try Format 3
 	result = extractFilesAndCodeFormat3(content);
 	if (result.length > 0) {
-		console.log('Format 3 detected and used');
 		return result;
 	}
 
-	// Then try Format 2
 	result = extractFilesAndCodeFormat2(content);
 	if (result.length > 0) {
-		console.log('Format 2 detected and used');
 		return result;
 	}
 
-	// Then try Format 1
 	result = extractFilesAndCodeFormat1(content);
 	if (result.length > 0) {
-		console.log('Format 1 detected and used');
 		return result;
 	}
 
-	// Fallback
 	const filePath = extractFilePathFromContent(content);
 	const code = content;
 
-	console.log('Using Fallback Format');
 	return [{ filePath, language: '', code }];
 }
 

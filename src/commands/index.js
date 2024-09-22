@@ -4,9 +4,6 @@ const clearfiles = require('./clearFiles');
 const removefile = require('./removeFile');
 const togglefile = require('./toggleFile');
 
-/**
- * Registers all commands for the extension.
- */
 function registerCommands(fileListProvider) {
 	const commands = [];
 
