@@ -21,25 +21,6 @@ async function generatePrompt(activeFiles, appendLine) {
 	return prompt;
 }
 
-function extractFilesAndCode(message) {
-	const result = [];
-	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
-	let match;
-	while ((match = regex.exec(message)) !== null) {
-		const filePath = match[1].trim();
-		const language = match[2].trim();
-		const code = match[3].trim();
-
-		if (filePath && language && code) {
-			result.push({ filePath, language, code });
-		} else {
-			console.warn('Incomplete section found:', match[0]);
-		}
-	}
-
-	return result;
-}
-
 async function readFileContent(fullPath) {
 	const fileUri = vscode.Uri.file(fullPath);
 	const content = await vscode.workspace.fs.readFile(fileUri);
@@ -121,7 +102,6 @@ function processFileContent(fileContent, relativePath) {
 
 module.exports = {
 	generatePrompt,
-	extractFilesAndCode,
 	readFileContent,
 	processFileContent
 };

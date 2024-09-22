@@ -3,7 +3,7 @@ const vscode = require('vscode');
 const { PlaceholderTreeItem } = require('../models/placeholderTreeItem');
 const { FolderItem } = require('../models/folderItem');
 const { FileItem } = require('../models/fileItem');
-const pathUtils = require('../utils/pathUtils');
+const pathUtils = require('../utils/messageUtils');
 
 class FileListProvider {
 	/**

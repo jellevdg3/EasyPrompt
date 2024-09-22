@@ -1,84 +1,67 @@
 const vscode = require('vscode');
 const path = require('path');
-const { extractFilePathFromContent, normalizePath } = require('./pathUtils');
+const { extractPathsAndCodeFromContent, normalizePath, removeFilePathLine } = require('./messageUtils');
 
-async function validateInput(filePathRaw, codeContentRaw, webviewView, context) {
+async function validateInput(rawContent, webviewView) {
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (!workspaceFolders || workspaceFolders.length === 0) {
 		vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace folder to paste the code.');
 		return false;
 	}
 
-	const filePath = filePathRaw.trim();
-	const codeContent = codeContentRaw.trim();
+	const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
 
-	if (!filePath) {
+	if (!extractedFiles || extractedFiles.length === 0) {
 		webviewView.webview.postMessage({
 			command: 'showError',
 			field: 'filePath',
-			message: 'File path cannot be empty.'
+			message: 'No valid file paths found in the content.'
 		});
 		return false;
 	}
 
-	if (!codeContent) {
-		vscode.window.showErrorMessage('Code content cannot be empty.');
-		return false;
+	for (const file of extractedFiles) {
+		if (!file.filePath) {
+			webviewView.webview.postMessage({
+				command: 'showError',
+				field: 'filePath',
+				message: 'One or more file paths are empty.'
+			});
+			return false;
+		}
+		if (!file.code) {
+			vscode.window.showErrorMessage('One or more code contents are empty.');
+			return false;
+		}
 	}
 
 	return true;
 }
 
-function prepareFile(filePathRaw, codeContentRaw, context) {
+function prepareFiles(rawContent) {
 	const workspaceUri = vscode.workspace.workspaceFolders[0].uri;
-	let filePath = filePathRaw.trim();
-	let codeContent = codeContentRaw.trim();
-
-	const extractedFilePath = extractFilePathFromContent(codeContent);
-	if (extractedFilePath) {
-		codeContent = removeFilePathLine(codeContent);
-	}
-
-	filePath = normalizePath(filePath);
-	const absolutePath = path.isAbsolute(filePath)
-		? filePath
-		: path.join(workspaceUri.fsPath, filePath);
-
-	return { absolutePath, codeContent };
-}
-
-function removeFilePathLine(content) {
-	const { FILE_PATH_REGEXES } = require('./pathUtils');
-	const lines = content.split('\n');
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i].trim();
-		if (line === '') {
-			continue;
-		}
-
-		for (const regex of FILE_PATH_REGEXES) {
-			const match = line.match(regex);
-			if (match) {
-				lines.splice(i, 1);
-				return lines.join('\n').trim();
-			}
-		}
-
-		break;
-	}
-
-	return content;
+	const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
+	const preparedFiles = extractedFiles.map(file => {
+		let filePath = normalizePath(file.filePath);
+		const absolutePath = path.isAbsolute(filePath)
+			? filePath
+			: path.join(workspaceUri.fsPath, filePath);
+		return {
+			absolutePath,
+			codeContent: file.code
+		};
+	});
+	return preparedFiles;
 }
 
 async function writeFileContent(fileUri, content) {
 	const encoder = new TextEncoder();
-	const contentBytes = encoder.encode(content);
+	const contentBytes = encoder.encode(removeFilePathLine(content));
 
-	let fileExists = false;
 	try {
 		await vscode.workspace.fs.stat(fileUri);
-		fileExists = true;
-	} catch (error) {
+	} catch {
+		// File does not exist, proceed to create
 	}
 
 	const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));
@@ -88,7 +71,7 @@ async function writeFileContent(fileUri, content) {
 
 async function formatAndSaveFile(fileUri) {
 	const document = await vscode.workspace.openTextDocument(fileUri);
-	const editor = await vscode.window.showTextDocument(document);
+	await vscode.window.showTextDocument(document);
 	await new Promise(resolve => setTimeout(resolve, 100));
 	await vscode.commands.executeCommand('editor.action.formatDocument');
 	await document.save();
@@ -96,7 +79,7 @@ async function formatAndSaveFile(fileUri) {
 
 module.exports = {
 	validateInput,
-	prepareFile,
+	prepareFiles,
 	writeFileContent,
 	formatAndSaveFile,
 	removeFilePathLine

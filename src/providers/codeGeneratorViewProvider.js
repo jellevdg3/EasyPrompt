@@ -1,8 +1,8 @@
 const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
-const { extractFilePathFromContent, normalizePath, FILE_PATH_REGEXES } = require('../utils/pathUtils');
-const { validateInput, prepareFile, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
+const { extractPathsAndCodeFromContent } = require('../utils/messageUtils');
+const { validateInput, prepareFiles, writeFileContent, formatAndSaveFile, removeFilePathLine } = require('../utils/fileUtils');
 const { generatePrompt } = require('../utils/promptUtils');
 
 class CodeGeneratorViewProvider {
@@ -46,7 +46,7 @@ class CodeGeneratorViewProvider {
 			async message => {
 				switch (message.command) {
 					case 'writeCodeToFile':
-						await this.handleWriteCodeToFile(message.filePath, message.code);
+						await this.handleWriteCodeToFile(message.content);
 						break;
 					case 'extractFilePath':
 						await this.extractAndPopulateFilePath(message.code);
@@ -64,64 +64,52 @@ class CodeGeneratorViewProvider {
 		);
 	}
 
-	async handleWriteCodeToFile(filePathRaw, codeContentRaw) {
-		const isValid = await validateInput(filePathRaw, codeContentRaw, this.view, this.context);
+	async handleWriteCodeToFile(rawContent) {
+		const isValid = await validateInput(rawContent, this.view);
 		if (!isValid) {
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
 			return;
 		}
 
-		const { absolutePath, codeContent } = prepareFile(filePathRaw, codeContentRaw, this.context);
-		const fileUri = vscode.Uri.file(absolutePath);
+		const preparedFiles = prepareFiles(rawContent);
+		const writePromises = preparedFiles.map(async ({ absolutePath, codeContent }) => {
+			const fileUri = vscode.Uri.file(absolutePath);
+			try {
+				await writeFileContent(fileUri, codeContent);
+				await formatAndSaveFile(fileUri);
+			} catch (error) {
+				console.error(`Error writing file ${absolutePath}: ${error}`);
+				throw new Error(`Failed to write file: ${absolutePath}`);
+			}
+		});
 
 		try {
-			await writeFileContent(fileUri, codeContent);
-			await formatAndSaveFile(fileUri);
+			await Promise.all(writePromises);
 			this.view.webview.postMessage({ command: 'writeToFileSuccess' });
 		} catch (error) {
-			console.error(`Error writing file ${absolutePath}: ${error}`);
-			vscode.window.showErrorMessage(`Failed to write file: ${absolutePath}`);
+			vscode.window.showErrorMessage(error.message);
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
 		}
 	}
 
-	async extractAndPopulateFilePath(codeContentRaw) {
-		const codeContent = codeContentRaw.trim();
-		if (!codeContent) {
-			return;
-		}
-
-		const extractedFilePath = extractFilePathFromContent(codeContent);
-		if (extractedFilePath) {
-			const cleanedCodeContent = this.removeFilePathLine(codeContent);
+	async extractAndPopulateFilePath(rawContent) {
+		const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
+		if (extractedFiles.length > 1) {
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
-				filePath: extractedFilePath,
-				cleanedCode: cleanedCodeContent
+				filePath: '[Multiple Files Detected]',
+				cleanedCode: rawContent
 			});
+		} else if (extractedFiles.length === 1) {
+			const { filePath, code } = extractedFiles[0];
+			this.view.webview.postMessage({
+				command: 'populateFilePath',
+				filePath: filePath,
+				cleanedCode: code
+			});
+		} else {
+			// No files detected
 		}
-	}
-
-	removeFilePathLine(content) {
-		const lines = content.split('\n');
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
-			if (line === '') {
-				continue;
-			}
-
-			for (const regex of FILE_PATH_REGEXES) {
-				const match = line.match(regex);
-				if (match) {
-					lines.splice(i, 1);
-					return lines.join('\n').trim();
-				}
-			}
-
-			break;
-		}
-
-		return content;
 	}
 
 	async handleCopyPrompt(appendLine) {

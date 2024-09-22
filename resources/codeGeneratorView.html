@@ -208,11 +208,11 @@
 		<div class="error-message" id="errorMessage">File path cannot be empty.</div>
 
 		<label for="filePath">File Path:</label>
-		<input type="text" id="filePath" placeholder="e.g., src/components/MyComponent.js">
+		<input type="text" id="filePath" placeholder="e.g., src/components/MyComponent.js" readonly>
 
 		<label for="codeContent">Code:</label>
 		<textarea id="codeContent"
-			placeholder="Paste your code here, including the file path in the first line..."></textarea>
+			placeholder="Paste your code here, including the file path in the first lines..."></textarea>
 		<button id="writeToFileButton">Write to File</button>
 
 		<div class="auto-write-container">
@@ -235,33 +235,17 @@
 		let originalWriteButtonText = writeToFileButton.textContent;
 		let originalCopyButtonText = copyPromptButton.textContent;
 
-		/**
-		 * Executes the write to file operation.
-		 */
 		function executeWrite() {
-			const filePath = filePathInput.value.trim();
 			const codeContent = codeContentTextarea.value;
 
-			// Reset error states
 			resetErrors();
-
-			if (!filePath) {
-				showError('filePath');
-				showErrorMessage('File path cannot be empty.');
-				return;
-			}
 
 			vscode.postMessage({
 				command: 'writeCodeToFile',
-				filePath: filePath,
-				code: codeContent
+				content: codeContent
 			});
 		}
 
-		/**
-		 * Extracts the file path from the pasted code and populates the filePath input.
-		 * Also removes the file path line from the code content.
-		 */
 		codeContentTextarea.addEventListener('input', () => {
 			const codeContent = codeContentTextarea.value;
 			vscode.postMessage({
@@ -270,11 +254,7 @@
 			});
 		});
 
-		/**
-		 * Handles the paste event to trigger automatic write if enabled.
-		 */
 		codeContentTextarea.addEventListener('paste', () => {
-			// Delay execution to allow the paste event to complete and content to be updated
 			setTimeout(() => {
 				if (autoWriteCheckbox.checked && filePathInput.value.trim()) {
 					executeWrite();
@@ -282,9 +262,6 @@
 			}, 100);
 		});
 
-		/**
-		 * Sends the appendLine value to the extension whenever it changes.
-		 */
 		appendLineInput.addEventListener('input', () => {
 			const appendLine = appendLineInput.value;
 			vscode.postMessage({
@@ -293,17 +270,13 @@
 			});
 		});
 
-		/**
-		 * Receives messages from the extension backend.
-		 */
 		window.addEventListener('message', event => {
 			const message = event.data;
 
 			switch (message.command) {
 				case 'populateFilePath':
 					filePathInput.value = message.filePath || '';
-					if (message.filePath) {
-						// Remove the file path line from the code content
+					if (message.filePath && message.filePath !== '[Multiple Files Detected]') {
 						codeContentTextarea.value = message.cleanedCode || '';
 					}
 					break;
@@ -327,16 +300,12 @@
 				case 'writeToFileFailure':
 					showWriteFailure();
 					break;
-				case 'setAppendLine': // New case for setting append line
+				case 'setAppendLine':
 					appendLineInput.value = message.appendLine || '';
 					break;
 			}
 		});
 
-		/**
-		 * Displays an error state on the specified field.
-		 * @param {string} field 
-		 */
 		function showError(field) {
 			if (field === 'filePath') {
 				filePathInput.classList.add('error', 'shake');
@@ -346,27 +315,17 @@
 			}
 		}
 
-		/**
-		 * Resets all error states.
-		 */
 		function resetErrors() {
 			filePathInput.classList.remove('error');
 			codeContentTextarea.classList.remove('error');
 			errorMessage.classList.remove('visible');
 		}
 
-		/**
-		 * Shows an error message.
-		 * @param {string} message 
-		 */
 		function showErrorMessage(message) {
 			errorMessage.textContent = message;
 			errorMessage.classList.add('visible');
 		}
 
-		/**
-		 * Handles the Copy Prompt button click.
-		 */
 		copyPromptButton.addEventListener('click', () => {
 			const appendLine = appendLineInput.value.trim();
 			vscode.postMessage({
@@ -375,57 +334,42 @@
 			});
 		});
 
-		/**
-		 * Shows the button text as a checkmark upon successful copy.
-		 */
 		function showCopySuccess() {
 			copyPromptButton.textContent = '✓';
-			copyPromptButton.style.backgroundColor = '#4caf50'; /* Green background */
+			copyPromptButton.style.backgroundColor = '#4caf50';
 			setTimeout(() => {
 				copyPromptButton.textContent = originalCopyButtonText;
-				copyPromptButton.style.backgroundColor = '#4d4d4d'; /* Reset to original color */
+				copyPromptButton.style.backgroundColor = '#4d4d4d';
 			}, 2000);
 		}
 
-		/**
-		 * Shows the button text as a red cross upon failed copy.
-		 */
 		function showCopyFailure() {
 			copyPromptButton.textContent = '✗';
-			copyPromptButton.style.backgroundColor = '#ff4d4d'; /* Red background */
+			copyPromptButton.style.backgroundColor = '#ff4d4d';
 			setTimeout(() => {
 				copyPromptButton.textContent = originalCopyButtonText;
-				copyPromptButton.style.backgroundColor = '#4d4d4d'; /* Reset to original color */
+				copyPromptButton.style.backgroundColor = '#4d4d4d';
 			}, 2000);
 		}
 
-		/**
-		 * Shows the button text as a checkmark upon successful write.
-		 */
 		function showWriteSuccess() {
 			writeToFileButton.textContent = '✓';
-			writeToFileButton.style.backgroundColor = '#4caf50'; /* Green background */
+			writeToFileButton.style.backgroundColor = '#4caf50';
 			setTimeout(() => {
 				writeToFileButton.textContent = originalWriteButtonText;
-				writeToFileButton.style.backgroundColor = '#4d4d4d'; /* Reset to original color */
+				writeToFileButton.style.backgroundColor = '#4d4d4d';
 			}, 2000);
 		}
 
-		/**
-		 * Shows the button text as a red cross upon failed write.
-		 */
 		function showWriteFailure() {
 			writeToFileButton.textContent = '✗';
-			writeToFileButton.style.backgroundColor = '#ff4d4d'; /* Red background */
+			writeToFileButton.style.backgroundColor = '#ff4d4d';
 			setTimeout(() => {
 				writeToFileButton.textContent = originalWriteButtonText;
-				writeToFileButton.style.backgroundColor = '#4d4d4d'; /* Reset to original color */
+				writeToFileButton.style.backgroundColor = '#4d4d4d';
 			}, 2000);
 		}
 
-		/**
-		 * Handles the Write to File button click.
-		 */
 		writeToFileButton.addEventListener('click', () => {
 			executeWrite();
 		});
