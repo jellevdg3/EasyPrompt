@@ -1,17 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
 
-/**
- * @filePath src/utils/promptUtils.js
- * Utility functions for generating prompts.
- */
-
-/**
- * Generates the prompt by reading and processing each active file.
- * @param {Array} activeFiles 
- * @param {string} appendLine 
- * @returns {Promise<string>}
- */
 async function generatePrompt(activeFiles, appendLine) {
 	let prompt = '';
 	for (const file of activeFiles) {
@@ -25,7 +14,6 @@ async function generatePrompt(activeFiles, appendLine) {
 		}
 	}
 
-	// Append the additional line if provided
 	if (appendLine && appendLine.trim() !== '') {
 		prompt += appendLine.trim() + '\n\n\n';
 	}
@@ -35,10 +23,7 @@ async function generatePrompt(activeFiles, appendLine) {
 
 function extractFilesAndCode(message) {
 	const result = [];
-
-	// Define a regex pattern to match each file section with any language
 	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
-
 	let match;
 	while ((match = regex.exec(message)) !== null) {
 		const filePath = match[1].trim();
@@ -55,11 +40,6 @@ function extractFilesAndCode(message) {
 	return result;
 }
 
-/**
- * Reads the content of a file.
- * @param {string} fullPath 
- * @returns {Promise<string>}
- */
 async function readFileContent(fullPath) {
 	const fileUri = vscode.Uri.file(fullPath);
 	const content = await vscode.workspace.fs.readFile(fileUri);
@@ -67,12 +47,6 @@ async function readFileContent(fullPath) {
 	return decoder.decode(content);
 }
 
-/**
- * Processes the content of a file by removing initial comments and wrapping it in code blocks.
- * @param {string} fileContent 
- * @param {string} relativePath 
- * @returns {string}
- */
 function processFileContent(fileContent, relativePath) {
 	const relativePathLower = relativePath.toLowerCase();
 	const fileName = path.basename(relativePathLower);

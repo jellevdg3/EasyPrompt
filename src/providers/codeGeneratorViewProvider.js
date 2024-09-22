@@ -5,28 +5,14 @@ const { extractFilePathFromContent, normalizePath, FILE_PATH_REGEXES } = require
 const { validateInput, prepareFile, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
 const { generatePrompt } = require('../utils/promptUtils');
 
-/**
- * @filePath src/providers/codeGeneratorViewProvider.js
- * Webview view provider for the "Code Generator" window.
- */
-
 class CodeGeneratorViewProvider {
-	/**
-	 * 
-	 * @param {vscode.ExtensionContext} context 
-	 * @param {Object} fileListProvider 
-	 */
 	constructor(context, fileListProvider) {
 		this.context = context;
-		this.fileListProvider = fileListProvider; // Store the reference
+		this.fileListProvider = fileListProvider;
 		this.view = null;
-		this.APPEND_LINE_KEY = 'codeGenerator.appendLine'; // Storage key for append line
+		this.APPEND_LINE_KEY = 'codeGenerator.appendLine';
 	}
 
-	/**
-	 * Registers the webview view provider with a given view ID.
-	 * @param {string} viewId 
-	 */
 	register(viewId) {
 		vscode.window.registerWebviewViewProvider(viewId, this, {
 			webviewOptions: {
@@ -35,46 +21,27 @@ class CodeGeneratorViewProvider {
 		});
 	}
 
-	/**
-	 * Returns the HTML content for the webview.
-	 * Loads the HTML from a separate file.
-	 * @returns {Promise<string>}
-	 */
 	async getHtmlForWebview(webview) {
 		const htmlPath = path.join(this.context.extensionPath, 'resources', 'codeGeneratorView.html');
 		let html = await fs.readFile(htmlPath, 'utf8');
-
-		// Replace the nonce or any placeholders if necessary
-		// For example, if you have scripts or styles to include securely
-
 		return html;
 	}
 
-	/**
-	 * Called by VS Code to resolve the webview view.
-	 * @param {vscode.WebviewView} webviewView 
-	 * @param {vscode.WebviewViewResolveContext} context 
-	 * @param {vscode.CancellationToken} token 
-	 */
 	async resolveWebviewView(webviewView, context, token) {
 		this.view = webviewView;
 
 		webviewView.webview.options = {
 			enableScripts: true,
-			// Restrict the webview to only load resources from your extension's `resources` directory.
 			localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'resources')]
 		};
 
 		webviewView.webview.html = await this.getHtmlForWebview(webviewView.webview);
-
-		// Send the stored appendLine value to the webview
 		const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
 		webviewView.webview.postMessage({
 			command: 'setAppendLine',
 			appendLine: storedAppendLine
 		});
 
-		// Handle messages from the webview
 		webviewView.webview.onDidReceiveMessage(
 			async message => {
 				switch (message.command) {
@@ -87,7 +54,7 @@ class CodeGeneratorViewProvider {
 					case 'copyPrompt':
 						await this.handleCopyPrompt(message.appendLine);
 						break;
-					case 'saveAppendLine': // New case for saving append line
+					case 'saveAppendLine':
 						await this.saveAppendLine(message.appendLine);
 						break;
 				}
@@ -97,11 +64,6 @@ class CodeGeneratorViewProvider {
 		);
 	}
 
-	/**
-	 * Handles writing the pasted code to a file.
-	 * @param {string} filePathRaw 
-	 * @param {string} codeContentRaw 
-	 */
 	async handleWriteCodeToFile(filePathRaw, codeContentRaw) {
 		const isValid = await validateInput(filePathRaw, codeContentRaw, this.view, this.context);
 		if (!isValid) {
@@ -123,25 +85,15 @@ class CodeGeneratorViewProvider {
 		}
 	}
 
-	/**
-	 * Extracts the file path from the pasted code and sends it back to the webview.
-	 * @param {string} codeContentRaw 
-	 */
 	async extractAndPopulateFilePath(codeContentRaw) {
 		const codeContent = codeContentRaw.trim();
-
 		if (!codeContent) {
 			return;
 		}
 
-		// Extract the file path from the code content
 		const extractedFilePath = extractFilePathFromContent(codeContent);
-
 		if (extractedFilePath) {
-			// Remove the file path line from the code content
 			const cleanedCodeContent = this.removeFilePathLine(codeContent);
-
-			// Send the extracted file path and cleaned code back to the webview
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
 				filePath: extractedFilePath,
@@ -150,16 +102,10 @@ class CodeGeneratorViewProvider {
 		}
 	}
 
-	/**
-	 * Removes the first line that contains the file path from the code content.
-	 * @param {string} content 
-	 * @returns {string}
-	 */
 	removeFilePathLine(content) {
 		const lines = content.split('\n');
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i].trim();
-
 			if (line === '') {
 				continue;
 			}
@@ -167,24 +113,17 @@ class CodeGeneratorViewProvider {
 			for (const regex of FILE_PATH_REGEXES) {
 				const match = line.match(regex);
 				if (match) {
-					// Remove this line
 					lines.splice(i, 1);
 					return lines.join('\n').trim();
 				}
 			}
 
-			// If no match in the first non-empty line, break
 			break;
 		}
 
-		// If no file path line found, return the original content
 		return content;
 	}
 
-	/**
-	 * Handles the copyPrompt command from the webview.
-	 * @param {string} appendLine 
-	 */
 	async handleCopyPrompt(appendLine) {
 		try {
 			const activeFiles = this.getActiveFiles();
@@ -210,18 +149,10 @@ class CodeGeneratorViewProvider {
 		}
 	}
 
-	/**
-	 * Retrieves the list of active (enabled) files.
-	 * @returns {Array}
-	 */
 	getActiveFiles() {
 		return this.fileListProvider.files.filter(file => !file.disabled);
 	}
 
-	/**
-	 * Saves the append line to global state.
-	 * @param {string} appendLine 
-	 */
 	async saveAppendLine(appendLine) {
 		try {
 			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
