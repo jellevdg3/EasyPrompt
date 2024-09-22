@@ -4,6 +4,7 @@ const { PlaceholderTreeItem } = require('../models/placeholderTreeItem');
 const { FolderItem } = require('../models/folderItem');
 const { FileItem } = require('../models/fileItem');
 const pathUtils = require('../utils/messageUtils');
+const fs = require('fs').promises;
 
 class FileListProvider {
 	/**
@@ -115,11 +116,24 @@ class FileListProvider {
 			}
 			try {
 				const absolutePath = path.resolve(filePath);
-				const normalizedPath = pathUtils.normalizePath(path.relative(workspacePath, absolutePath));
-				if (!this.files.find(f => f.path === normalizedPath)) {
-					this.files.push({ path: normalizedPath, fullPath: absolutePath, disabled: false });
-				} else {
-					console.info(`File already exists in the list: ${normalizedPath}`);
+				const stats = await fs.stat(absolutePath);
+				if (stats.isDirectory()) {
+					const files = await this.getAllFilesInDirectory(absolutePath);
+					for (const file of files) {
+						const normalizedPath = pathUtils.normalizePath(path.relative(workspacePath, file));
+						if (!this.files.find(f => f.path === normalizedPath)) {
+							this.files.push({ path: normalizedPath, fullPath: file, disabled: false });
+						} else {
+							console.info(`File already exists in the list: ${normalizedPath}`);
+						}
+					}
+				} else if (stats.isFile()) {
+					const normalizedPath = pathUtils.normalizePath(path.relative(workspacePath, absolutePath));
+					if (!this.files.find(f => f.path === normalizedPath)) {
+						this.files.push({ path: normalizedPath, fullPath: absolutePath, disabled: false });
+					} else {
+						console.info(`File already exists in the list: ${normalizedPath}`);
+					}
 				}
 			} catch (error) {
 				console.error(`Error processing file ${filePath}: ${error}`);
@@ -127,6 +141,20 @@ class FileListProvider {
 			}
 		}
 		this.refresh();
+	}
+
+	async getAllFilesInDirectory(dir) {
+		let files = [];
+		const entries = await fs.readdir(dir, { withFileTypes: true });
+		for (const entry of entries) {
+			const fullPath = path.join(dir, entry.name);
+			if (entry.isDirectory()) {
+				files = files.concat(await this.getAllFilesInDirectory(fullPath));
+			} else if (entry.isFile()) {
+				files.push(fullPath);
+			}
+		}
+		return files;
 	}
 
 	clearFiles() {

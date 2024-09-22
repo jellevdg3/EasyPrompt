@@ -1,10 +1,10 @@
 {
-	"name": "code-prompt-generator",
-	"displayName": "Code Prompt Generator",
+	"name": "easy-prompt",
+	"displayName": "Easy Prompt",
 	"description": "Manage a list of files and allows for generating a GPT prompt with a single click",
 	"publisher": "jellevdg3",
 	"icon": "images/icon.png",
-	"version": "0.0.24",
+	"version": "0.0.30",
 	"engines": {
 		"vscode": "^1.93.0"
 	},

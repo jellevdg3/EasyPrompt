@@ -78,17 +78,50 @@ function extractFilesAndCodeFormat2(message) {
 	return result;
 }
 
+function extractFilesAndCodeFormat3(message) {
+	const result = [];
+	const regex = /---\s*([^\s]+)\s*---\s*```(\w+)?\s*([\s\S]*?)```/g;
+	let match;
+
+	while ((match = regex.exec(message)) !== null) {
+		const filePath = match[1].trim();
+		const language = match[2] ? match[2].trim() : '';
+		const code = match[3].trim();
+
+		if (filePath && code) {
+			const codeWithPath = "// " + filePath + "\n" + code;
+			result.push({ filePath, language, code: codeWithPath });
+		} else {
+			console.warn('Incomplete section found:', match[0]);
+		}
+	}
+
+	return result;
+}
+
 function extractPathsAndCodeFromContent(content) {
-	let result = extractFilesAndCodeFormat1(content);
+	let result = extractFilesAndCodeFormat3(content);
 	if (result.length > 0) {
+		console.log('Format 3');
 		return result;
 	}
+
 	result = extractFilesAndCodeFormat2(content);
 	if (result.length > 0) {
+		console.log('Format 2');
 		return result;
 	}
+
+	result = extractFilesAndCodeFormat1(content);
+	if (result.length > 0) {
+		console.log('Format 1');
+		return result;
+	}
+
 	const path = extractFilePathFromContent(content);
 	const code = content;
+
+	console.log('Format Fallback');
 	return [{ filePath: path, language: '', code }];
 }
 
