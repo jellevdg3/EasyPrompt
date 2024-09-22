@@ -2,8 +2,9 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
 const { extractFilePathFromContent, normalizePath, FILE_PATH_REGEXES } = require('../utils/pathUtils');
-const { validateInput, prepareFile, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
-const { generatePrompt } = require('../utils/promptUtils');
+const { validateInput, prepareFile, writeFileContent, formatAndSaveFile, removeFilePathLine } = require('../utils/fileUtils');
+const { generatePrompt, prepareCode } = require('../utils/promptUtils');
+const codePrepUtils = require('../utils/codePrepUtils');
 
 class CodeGeneratorViewProvider {
 	constructor(context, fileListProvider) {
@@ -71,18 +72,14 @@ class CodeGeneratorViewProvider {
 			return;
 		}
 
-		const { absolutePath, codeContent } = prepareFile(filePathRaw, codeContentRaw, this.context);
-		const fileUri = vscode.Uri.file(absolutePath);
-
-		try {
-			await writeFileContent(fileUri, codeContent);
-			await formatAndSaveFile(fileUri);
-			this.view.webview.postMessage({ command: 'writeToFileSuccess' });
-		} catch (error) {
-			console.error(`Error writing file ${absolutePath}: ${error}`);
-			vscode.window.showErrorMessage(`Failed to write file: ${absolutePath}`);
+		// Use the new prepareCode method from promptUtils which utilizes codePrepUtils
+		const prepResult = await prepareCode(codeContentRaw, this.context);
+		if (!prepResult.success) {
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
+			return;
 		}
+
+		this.view.webview.postMessage({ command: 'writeToFileSuccess' });
 	}
 
 	async extractAndPopulateFilePath(codeContentRaw) {
@@ -93,35 +90,13 @@ class CodeGeneratorViewProvider {
 
 		const extractedFilePath = extractFilePathFromContent(codeContent);
 		if (extractedFilePath) {
-			const cleanedCodeContent = this.removeFilePathLine(codeContent);
+			const cleanedCodeContent = removeFilePathLine(codeContent);
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
 				filePath: extractedFilePath,
 				cleanedCode: cleanedCodeContent
 			});
 		}
-	}
-
-	removeFilePathLine(content) {
-		const lines = content.split('\n');
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
-			if (line === '') {
-				continue;
-			}
-
-			for (const regex of FILE_PATH_REGEXES) {
-				const match = line.match(regex);
-				if (match) {
-					lines.splice(i, 1);
-					return lines.join('\n').trim();
-				}
-			}
-
-			break;
-		}
-
-		return content;
 	}
 
 	async handleCopyPrompt(appendLine) {

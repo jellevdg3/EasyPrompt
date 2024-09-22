@@ -1,5 +1,6 @@
 const vscode = require('vscode');
 const path = require('path');
+const codePrepUtils = require('./codePrepUtils');
 
 async function generatePrompt(activeFiles, appendLine) {
 	let prompt = '';
@@ -38,6 +39,33 @@ function extractFilesAndCode(message) {
 	}
 
 	return result;
+}
+
+async function prepareCode(rawContent, context) {
+	const { files, preparedData } = await codePrepUtils.prep(rawContent, context);
+	if (files.length > 0) {
+		// Handle extracted files
+		// Example: Write each file
+		for (const file of files) {
+			const fileUri = vscode.Uri.file(file.filePath);
+			await vscode.workspace.fs.writeFile(fileUri, Buffer.from(file.content, 'utf8'));
+			await formatAndSaveFile(fileUri);
+		}
+		return { success: true, message: 'Files extracted and written successfully.' };
+	} else if (preparedData) {
+		// Handle default preparation
+		const { absolutePath, codeContent } = preparedData;
+		const fileUri = vscode.Uri.file(absolutePath);
+		try {
+			await writeFileContent(fileUri, codeContent);
+			await formatAndSaveFile(fileUri);
+			return { success: true, message: 'File written successfully.' };
+		} catch (error) {
+			console.error(`Error writing file ${absolutePath}: ${error}`);
+			vscode.window.showErrorMessage(`Failed to write file: ${absolutePath}`);
+			return { success: false, message: 'Failed to write file.' };
+		}
+	}
 }
 
 async function readFileContent(fullPath) {
@@ -119,9 +147,37 @@ function processFileContent(fileContent, relativePath) {
 	return `${codeBlockWord}// ${relativePath}\n${cleanedCodeContent}\n${codeBlockWord}\n\n`;
 }
 
+async function formatAndSaveFile(fileUri) {
+	const document = await vscode.workspace.openTextDocument(fileUri);
+	const editor = await vscode.window.showTextDocument(document);
+	await new Promise(resolve => setTimeout(resolve, 100));
+	await vscode.commands.executeCommand('editor.action.formatDocument');
+	await document.save();
+}
+
+async function writeFileContent(fileUri, content) {
+	const encoder = new TextEncoder();
+	const contentBytes = encoder.encode(content);
+
+	let fileExists = false;
+	try {
+		await vscode.workspace.fs.stat(fileUri);
+		fileExists = true;
+	} catch (error) {
+		// File does not exist
+	}
+
+	const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));
+	await vscode.workspace.fs.createDirectory(parentUri);
+	await vscode.workspace.fs.writeFile(fileUri, contentBytes);
+}
+
 module.exports = {
 	generatePrompt,
-	extractFilesAndCode,
+	prepareCode,
 	readFileContent,
-	processFileContent
+	extractFilesAndCode,
+	processFileContent,
+	formatAndSaveFile,
+	writeFileContent
 };
