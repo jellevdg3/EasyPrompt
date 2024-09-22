@@ -77,6 +77,25 @@ function extractFilesAndCodeFormat2(message) {
 
 	return result;
 }
+function extractFilesAndCodeFormat3(message) {
+	const result = [];
+	const regex = /### ---\s+(.+?)\s+---\n+```([\w+#\-]+)\s*([\s\S]*?)```/g;
+	let match;
+
+	while ((match = regex.exec(message)) !== null) {
+		const filePath = match[1].trim();
+		const language = match[2].trim();
+		const code = match[3].trim();
+
+		if (filePath && language && code) {
+			result.push({ filePath, language, code });
+		} else {
+			console.warn('Incomplete section found:', match[0]);
+		}
+	}
+
+	return result;
+}
 
 function extractPathsAndCodeFromContent(content) {
 	let result = extractFilesAndCodeFormat1(content);
@@ -84,6 +103,10 @@ function extractPathsAndCodeFromContent(content) {
 		return result;
 	}
 	result = extractFilesAndCodeFormat2(content);
+	if (result.length > 0) {
+		return result;
+	}
+	result = extractFilesAndCodeFormat3(content);
 	if (result.length > 0) {
 		return result;
 	}

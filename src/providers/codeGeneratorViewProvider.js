@@ -2,7 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
 const { extractPathsAndCodeFromContent } = require('../utils/messageUtils');
-const { validateInput, prepareFiles, writeFileContent, formatAndSaveFile, removeFilePathLine } = require('../utils/fileUtils');
+const { validateInput, prepareFiles, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
 const { generatePrompt } = require('../utils/promptUtils');
 
 class CodeGeneratorViewProvider {

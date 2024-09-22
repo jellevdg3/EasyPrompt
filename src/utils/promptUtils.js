@@ -97,7 +97,7 @@ function processFileContent(fileContent, relativePath) {
 	const cleanedCodeContent = lines.slice(i).join('\n');
 	const codeBlockChar = '`';
 	const codeBlockWord = `${codeBlockChar}${codeBlockChar}${codeBlockChar}`;
-	return `${codeBlockWord}// ${relativePath}\n${cleanedCodeContent}\n${codeBlockWord}\n\n`;
+	return `--- ${relativePath} ---\n${codeBlockWord}${cleanedCodeContent}\n${codeBlockWord}\n\n`;
 }
 
 module.exports = {
