@@ -38,11 +38,10 @@ function extractFilePathFromContent(content) {
 
 function extractFilesAndCodeFormat1(message) {
 	const result = [];
-	const regex = /###\s+`([^`]+)`\s+```([\w+#\-]+)\s*([\s\S]*?)```/g;
+	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
 	let match;
-
 	while ((match = regex.exec(message)) !== null) {
-		const filePath = match[1].trim();
+		const filePath = match[1].replace(/---/g, '').replace(/`/g, '').trim();
 		const language = match[2].trim();
 		const code = match[3].trim();
 
@@ -55,7 +54,6 @@ function extractFilesAndCodeFormat1(message) {
 
 	return result;
 }
-
 
 function extractFilesAndCodeFormat2(message) {
 	const result = [];
@@ -80,26 +78,6 @@ function extractFilesAndCodeFormat2(message) {
 	return result;
 }
 
-function extractFilesAndCodeFormat3(message) {
-	const result = [];
-	const regex = /###\s+---\s+([^-\n]+?)\s+---\s*\n+```([\w+#\-]+)\s*([\s\S]*?)```/g;
-	let match;
-
-	while ((match = regex.exec(message)) !== null) {
-		const filePath = match[1].trim();
-		const language = match[2].trim();
-		const code = match[3].trim();
-
-		if (filePath && language && code) {
-			result.push({ filePath, language, code });
-		} else {
-			console.warn('Incomplete section found:', match[0]);
-		}
-	}
-
-	return result;
-}
-
 function extractPathsAndCodeFromContent(content) {
 	let result = extractFilesAndCodeFormat1(content);
 	if (result.length > 0) {
@@ -109,11 +87,6 @@ function extractPathsAndCodeFromContent(content) {
 	if (result.length > 0) {
 		return result;
 	}
-	result = extractFilesAndCodeFormat3(content);
-	if (result.length > 0) {
-		return result;
-	}
-
 	const path = extractFilePathFromContent(content);
 	const code = content;
 	return [{ filePath: path, language: '', code }];
