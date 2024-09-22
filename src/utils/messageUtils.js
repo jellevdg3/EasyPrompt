@@ -36,7 +36,7 @@ function extractFilePathFromContent(content) {
 	return null;
 }
 
-function extractFilesAndCode(message) {
+function extractFilesAndCodeFormat1(message) {
 	const result = [];
 	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
 	let match;
@@ -44,10 +44,6 @@ function extractFilesAndCode(message) {
 		const filePath = match[1].trim().replace(/`/g, '');
 		const language = match[2].trim();
 		const code = match[3].trim();
-
-		console.log('filePath: ', filePath);
-		console.log('language: ', language);
-		console.log('code: ', code);
 
 		if (filePath && language && code) {
 			result.push({ filePath, language, code });
@@ -59,14 +55,42 @@ function extractFilesAndCode(message) {
 	return result;
 }
 
-function extractPathsAndCodeFromContent(content) {
-	const result = extractFilesAndCode(content);
-	if (result.length === 0) {
-		const path = extractFilePathFromContent(content);
-		const code = content;
-		return [{ filePath: path, language: '', code }];
+function extractFilesAndCodeFormat2(message) {
+	const result = [];
+	const codeBlockRegex = /```([\w+#\-]+)\s*([\s\S]+?)```/g;
+	let match;
+
+	while ((match = codeBlockRegex.exec(message)) !== null) {
+		const language = match[1].trim();
+		let code = match[2].trim();
+
+		// Extract file path from the first line of the code
+		const filePath = extractFilePathFromContent(code);
+		if (filePath) {
+			// Remove the file path comment line from the code
+			code = removeFilePathLine(code);
+			result.push({ filePath, language, code });
+		} else {
+			console.warn('No file path found for this code block:', code);
+		}
 	}
+
 	return result;
+}
+
+function extractPathsAndCodeFromContent(content) {
+	let result = extractFilesAndCodeFormat1(content);
+	if (result.length > 0) {
+		return result;
+	}
+	result = extractFilesAndCodeFormat2(content);
+	if (result.length > 0) {
+		return result;
+	}
+
+	const path = extractFilePathFromContent(content);
+	const code = content;
+	return [{ filePath: path, language: '', code }];
 }
 
 function removeFilePathLine(content) {
