@@ -213,7 +213,6 @@ class FileListProvider {
 		if (index !== -1) {
 			this.files.splice(index, 1);
 			this.refresh();
-			vscode.window.showInformationMessage(`File removed: ${filePath}`);
 		} else {
 			vscode.window.showErrorMessage(`File not found: ${filePath}`);
 		}
