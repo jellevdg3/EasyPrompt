@@ -36,16 +36,17 @@ async function generatePrompt(activeFiles, appendLine) {
 function extractFilesAndCode(message) {
 	const result = [];
 
-	// Define a regex pattern to match each file section
-	const regex = /###\s+(.+?)\s+```javascript\s*([\s\S]*?)```/g;
+	// Define a regex pattern to match each file section with any language
+	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
 
 	let match;
 	while ((match = regex.exec(message)) !== null) {
 		const filePath = match[1].trim();
-		const code = match[2].trim();
+		const language = match[2].trim();
+		const code = match[3].trim();
 
-		if (filePath && code) {
-			result.push({ filePath, code });
+		if (filePath && language && code) {
+			result.push({ filePath, language, code });
 		} else {
 			console.warn('Incomplete section found:', match[0]);
 		}
