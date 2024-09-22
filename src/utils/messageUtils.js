@@ -38,10 +38,11 @@ function extractFilePathFromContent(content) {
 
 function extractFilesAndCodeFormat1(message) {
 	const result = [];
-	const regex = /###\s+(.+?)\s+```([\w+#\-]+)\s*([\s\S]*?)```/g
+	const regex = /###\s+`([^`]+)`\s+```([\w+#\-]+)\s*([\s\S]*?)```/g;
 	let match;
+
 	while ((match = regex.exec(message)) !== null) {
-		const filePath = match[1].trim().replace(/`/g, '');
+		const filePath = match[1].trim();
 		const language = match[2].trim();
 		const code = match[3].trim();
 
@@ -54,6 +55,7 @@ function extractFilesAndCodeFormat1(message) {
 
 	return result;
 }
+
 
 function extractFilesAndCodeFormat2(message) {
 	const result = [];
@@ -77,9 +79,10 @@ function extractFilesAndCodeFormat2(message) {
 
 	return result;
 }
+
 function extractFilesAndCodeFormat3(message) {
 	const result = [];
-	const regex = /### ---\s+(.+?)\s+---\n+```([\w+#\-]+)\s*([\s\S]*?)```/g;
+	const regex = /###\s+---\s+([^-\n]+?)\s+---\s*\n+```([\w+#\-]+)\s*([\s\S]*?)```/g;
 	let match;
 
 	while ((match = regex.exec(message)) !== null) {
