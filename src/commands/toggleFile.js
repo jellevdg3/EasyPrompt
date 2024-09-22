@@ -1,11 +1,6 @@
 const vscode = require('vscode');
 
 /**
- * @filePath src/commands/toggleFile.js
- * Handles the "Toggle Enable/Disable" command.
- */
-
-/**
  * Handles the "Toggle Enable/Disable" command.
  *
  * @function

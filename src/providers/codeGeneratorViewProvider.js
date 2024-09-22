@@ -2,6 +2,8 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
 const { extractFilePathFromContent, normalizePath, FILE_PATH_REGEXES } = require('../utils/pathUtils');
+const { validateInput, prepareFile, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
+const { generatePrompt } = require('../utils/promptUtils');
 
 /**
  * @filePath src/providers/codeGeneratorViewProvider.js
@@ -77,7 +79,7 @@ class CodeGeneratorViewProvider {
 			async message => {
 				switch (message.command) {
 					case 'writeCodeToFile':
-						await this.writeCodeToFile(message.filePath, message.code);
+						await this.handleWriteCodeToFile(message.filePath, message.code);
 						break;
 					case 'extractFilePath':
 						await this.extractAndPopulateFilePath(message.code);
@@ -96,135 +98,28 @@ class CodeGeneratorViewProvider {
 	}
 
 	/**
-	 * Saves the append line to global state.
-	 * @param {string} appendLine 
-	 */
-	async saveAppendLine(appendLine) {
-		try {
-			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
-		} catch (error) {
-			console.error(`Error saving appendLine: ${error}`);
-			vscode.window.showErrorMessage('Failed to save the append line.');
-		}
-	}
-
-	/**
 	 * Handles writing the pasted code to a file.
 	 * @param {string} filePathRaw 
 	 * @param {string} codeContentRaw 
 	 */
-	async writeCodeToFile(filePathRaw, codeContentRaw) {
-		const workspaceFolders = vscode.workspace.workspaceFolders;
-		if (!workspaceFolders || workspaceFolders.length === 0) {
-			vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace folder to paste the code.');
-			this.view.webview.postMessage({
-				command: 'writeToFileFailure'
-			});
+	async handleWriteCodeToFile(filePathRaw, codeContentRaw) {
+		const isValid = await validateInput(filePathRaw, codeContentRaw, this.view, this.context);
+		if (!isValid) {
+			this.view.webview.postMessage({ command: 'writeToFileFailure' });
 			return;
 		}
 
-		const workspaceUri = workspaceFolders[0].uri;
-
-		const filePath = filePathRaw.trim();
-		let codeContent = codeContentRaw.trim();
-
-		if (!filePath) {
-			// Inform the webview to show error
-			this.view.webview.postMessage({
-				command: 'showError',
-				field: 'filePath',
-				message: 'File path cannot be empty.'
-			});
-			this.view.webview.postMessage({
-				command: 'writeToFileFailure'
-			});
-			return;
-		}
-
-		if (!codeContent) {
-			vscode.window.showErrorMessage('Code content cannot be empty.');
-			this.view.webview.postMessage({
-				command: 'writeToFileFailure'
-			});
-			return;
-		}
-
-		// Extract the file path from the code content if present
-		const extractedFilePath = extractFilePathFromContent(codeContent);
-		if (extractedFilePath) {
-			// Remove the file path line from the code content
-			codeContent = this.removeFilePathLine(codeContent);
-			// Optionally, you can choose to prefer the input filePath over the extracted one
-			// For now, we'll use the input filePath
-		}
-
-		let filePathToUse = filePath;
-
-		// Normalize the file path
-		filePathToUse = normalizePath(filePathToUse);
-
-		// Resolve the absolute file path
-		const absolutePath = path.isAbsolute(filePathToUse)
-			? filePathToUse
-			: path.join(workspaceUri.fsPath, filePathToUse);
-
+		const { absolutePath, codeContent } = prepareFile(filePathRaw, codeContentRaw, this.context);
 		const fileUri = vscode.Uri.file(absolutePath);
 
-		// Prepare the content to write
-		const encoder = new TextEncoder();
-		const contentBytes = encoder.encode(codeContent);
-
 		try {
-			// Check if file exists
-			let fileExists = false;
-			try {
-				await vscode.workspace.fs.stat(fileUri);
-				fileExists = true;
-			} catch (error) {
-				// File does not exist
-			}
-
-			// Create parent directories if necessary
-			const parentUri = vscode.Uri.file(path.dirname(absolutePath));
-			await vscode.workspace.fs.createDirectory(parentUri);
-
-			// Write the content to the file
-			await vscode.workspace.fs.writeFile(fileUri, contentBytes);
-
-			// Clear the fields in the webview
-			this.view.webview.postMessage({
-				command: 'clearFields'
-			});
-
-			// **New Code Starts Here**
-
-			// Open the newly created file in the editor
-			const document = await vscode.workspace.openTextDocument(fileUri);
-			const editor = await vscode.window.showTextDocument(document);
-
-			// Wait for the editor to be ready
-			await new Promise(resolve => setTimeout(resolve, 100));
-
-			// Execute the format command on the active editor
-			await vscode.commands.executeCommand('editor.action.formatDocument');
-
-			// Save the formatted document
-			await document.save();
-
-			// **New Code Ends Here**
-
-			// Send success message to webview
-			this.view.webview.postMessage({
-				command: 'writeToFileSuccess'
-			});
-
+			await writeFileContent(fileUri, codeContent);
+			await formatAndSaveFile(fileUri);
+			this.view.webview.postMessage({ command: 'writeToFileSuccess' });
 		} catch (error) {
-			console.error(`Error writing file ${filePathToUse}: ${error}`);
-			vscode.window.showErrorMessage(`Failed to write file: ${filePathToUse}`);
-			// Send failure message to webview
-			this.view.webview.postMessage({
-				command: 'writeToFileFailure'
-			});
+			console.error(`Error writing file ${absolutePath}: ${error}`);
+			vscode.window.showErrorMessage(`Failed to write file: ${absolutePath}`);
+			this.view.webview.postMessage({ command: 'writeToFileFailure' });
 		}
 	}
 
@@ -288,11 +183,11 @@ class CodeGeneratorViewProvider {
 
 	/**
 	 * Handles the copyPrompt command from the webview.
-	 * @param {string} appendLine
+	 * @param {string} appendLine 
 	 */
 	async handleCopyPrompt(appendLine) {
 		try {
-			const activeFiles = this.fileListProvider.files.filter(file => !file.disabled);
+			const activeFiles = this.getActiveFiles();
 			if (activeFiles.length === 0) {
 				vscode.window.showInformationMessage('No active files to generate the prompt.');
 				this.view.webview.postMessage({
@@ -301,99 +196,7 @@ class CodeGeneratorViewProvider {
 				return;
 			}
 
-			let prompt = '';
-			for (const file of activeFiles) {
-				try {
-					const fileUri = vscode.Uri.file(file.fullPath);
-					const content = await vscode.workspace.fs.readFile(fileUri);
-					const decoder = new TextDecoder('utf-8');
-					let fileContent = decoder.decode(content);
-
-					// Remove initial comments containing the file name or path
-					const relativePath = file.path; // e.g., 'src/commands/copyPrompt.js'
-					const fileName = path.basename(relativePath); // 'copyPrompt.js'
-					const fileNameLower = fileName.toLowerCase();
-					const relativePathLower = relativePath.toLowerCase();
-
-					const lines = fileContent.split('\n');
-					let i = 0;
-					let inMultiLineComment = false;
-
-					while (i < lines.length) {
-						let line = lines[i];
-
-						if (line.trim() === '') {
-							i++;
-							continue;
-						}
-
-						if (inMultiLineComment) {
-							const endIndex = line.indexOf('*/');
-							if (endIndex !== -1) {
-								inMultiLineComment = false;
-								const commentContent = line.substring(0, endIndex + 2).toLowerCase();
-								if (commentContent.includes(fileNameLower) || commentContent.includes(relativePathLower)) {
-									i++;
-									continue;
-								} else {
-									break;
-								}
-							} else {
-								if (line.toLowerCase().includes(fileNameLower) || line.toLowerCase().includes(relativePathLower)) {
-									i++;
-									continue;
-								} else {
-									break;
-								}
-							}
-						} else {
-							const trimmedLine = line.trim();
-							if (trimmedLine.startsWith('//') || trimmedLine.startsWith('#')) {
-								const commentContent = trimmedLine.slice(2).trim().toLowerCase();
-								if (commentContent.endsWith(fileNameLower) || commentContent.endsWith(relativePathLower)) {
-									i++;
-									continue;
-								} else {
-									break;
-								}
-							} else if (trimmedLine.startsWith('/*')) {
-								inMultiLineComment = true;
-								const endIndex = trimmedLine.indexOf('*/');
-								let commentContent;
-								if (endIndex !== -1) {
-									inMultiLineComment = false;
-									commentContent = trimmedLine.substring(0, endIndex + 2).toLowerCase();
-								} else {
-									commentContent = trimmedLine.toLowerCase();
-								}
-								if (commentContent.includes(fileNameLower) || commentContent.includes(relativePathLower)) {
-									i++;
-									continue;
-								} else {
-									break;
-								}
-							} else {
-								break;
-							}
-						}
-					}
-
-					fileContent = lines.slice(i).join('\n');
-
-					const codeBlockChar = '`';
-					const codeBlockWord = `${codeBlockChar}${codeBlockChar}${codeBlockChar}`;
-					prompt += `${codeBlockWord}// ${file.path}\n${fileContent}\n${codeBlockWord}\n\n`;
-				} catch (error) {
-					console.error(`Error reading file ${file.path}: ${error} `);
-					vscode.window.showErrorMessage(`Failed to read file: ${file.path}`);
-				}
-			}
-
-			// Append the additional line if provided
-			if (appendLine && appendLine.trim() !== '') {
-				prompt += appendLine.trim() + '\n\n\n';
-			}
-
+			const prompt = await generatePrompt(activeFiles, appendLine);
 			await vscode.env.clipboard.writeText(prompt);
 			this.view.webview.postMessage({
 				command: 'copyPromptSuccess'
@@ -404,6 +207,27 @@ class CodeGeneratorViewProvider {
 			this.view.webview.postMessage({
 				command: 'copyPromptFailure'
 			});
+		}
+	}
+
+	/**
+	 * Retrieves the list of active (enabled) files.
+	 * @returns {Array}
+	 */
+	getActiveFiles() {
+		return this.fileListProvider.files.filter(file => !file.disabled);
+	}
+
+	/**
+	 * Saves the append line to global state.
+	 * @param {string} appendLine 
+	 */
+	async saveAppendLine(appendLine) {
+		try {
+			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
+		} catch (error) {
+			console.error(`Error saving appendLine: ${error}`);
+			vscode.window.showErrorMessage('Failed to save the append line.');
 		}
 	}
 }

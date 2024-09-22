@@ -1,11 +1,6 @@
 const vscode = require('vscode');
 
 /**
- * @filePath src/commands/openFileList.js
- * Handles the "Open Code Prompt Generator Window" command.
- */
-
-/**
  * Handles the "Open Code Prompt Generator Window" command.
  *
  * @function

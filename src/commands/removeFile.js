@@ -1,11 +1,6 @@
 const vscode = require('vscode');
 
 /**
- * @filePath src/commands/removeFile.js
- * Handles the "Remove File" command.
- */
-
-/**
  * Handles the "Remove File" command.
  *
  * @function

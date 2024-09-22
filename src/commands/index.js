@@ -5,11 +5,6 @@ const removefile = require('./removeFile');
 const togglefile = require('./toggleFile');
 
 /**
- * @filePath src/commands/index.js
- * Registers all commands for the extension.
- */
-
-/**
  * Registers all commands for the extension.
  */
 function registerCommands(fileListProvider) {
