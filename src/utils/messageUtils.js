@@ -10,8 +10,6 @@ const FILE_PATH_REGEXES = [
 	/^---\s*(.+)\s*---$/i
 ];
 
-const FORMAT4_REGEX = /---\s*\n\*\*(.+?)\*\*\s*\n```(\w+)?\s*\n([\s\S]*?)```/g;
-
 function normalizePath(p) {
 	return p.split(path.sep).join('/');
 }
@@ -100,6 +98,7 @@ function extractFilesAndCodeFormat4(message) {
 	const result = [];
 	let match;
 
+	const FORMAT4_REGEX = /---\s*\n\*\*(.+?)\*\*\s*\n```(\w+)?\s*\n([\s\S]*?)```/g;
 	while ((match = FORMAT4_REGEX.exec(message)) !== null) {
 		const filePath = match[1].trim();
 		const language = match[2] ? match[2].trim() : '';

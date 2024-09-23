@@ -106,7 +106,6 @@ class CodeGeneratorViewProvider {
 				filePath: filePath,
 				cleanedCode: code
 			});
-		} else {
 		}
 	}
 

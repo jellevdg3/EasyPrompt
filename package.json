@@ -4,7 +4,7 @@
 	"description": "Manage a list of files and allows for generating a GPT prompt with a single click",
 	"publisher": "jellevdg3",
 	"icon": "images/icon.png",
-	"version": "0.0.33",
+	"version": "0.0.36",
 	"engines": {
 		"vscode": "^1.93.0"
 	},
@@ -19,7 +19,7 @@
 				{
 					"id": "codePromptGenerator",
 					"title": "Code Prompt Generator",
-					"icon": "resources/icon.svg"
+					"icon": "resources/icon_transparent.png"
 				}
 			]
 		},
@@ -28,13 +28,13 @@
 				{
 					"id": "fileListView",
 					"name": "Files",
-					"icon": "resources/icon.svg"
+					"icon": "resources/icon_transparent.png"
 				},
 				{
 					"id": "codeGeneratorView",
 					"name": "Code Generator",
 					"type": "webview",
-					"icon": "resources/paste-icon.svg"
+					"icon": "resources/icon_transparent.png"
 				}
 			]
 		},
