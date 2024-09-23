@@ -58,14 +58,24 @@ async function writeFileContent(fileUri, content) {
 	const encoder = new TextEncoder();
 	const contentBytes = encoder.encode(removeFilePathLine(content));
 
-	try {
-		await vscode.workspace.fs.stat(fileUri);
-	} catch {
-	}
+	const retries = 5;
+	for (var i = 0; i < retries; i++) {
+		try {
+			try {
+				await vscode.workspace.fs.stat(fileUri);
+			} catch {
+			}
 
-	const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));
-	await vscode.workspace.fs.createDirectory(parentUri);
-	await vscode.workspace.fs.writeFile(fileUri, contentBytes);
+			const parentUri = vscode.Uri.file(path.dirname(fileUri.fsPath));
+			await vscode.workspace.fs.createDirectory(parentUri);
+			await vscode.workspace.fs.writeFile(fileUri, contentBytes);
+		} catch (error) {
+			await new Promise(resolve => setTimeout(resolve, 100));
+			if (i >= retries - 1) {
+				throw new Error(error);
+			}
+		}
+	}
 }
 
 async function formatAndSaveFile(fileUri) {
