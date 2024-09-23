@@ -69,11 +69,23 @@ async function writeFileContent(fileUri, content) {
 }
 
 async function formatAndSaveFile(fileUri) {
-	const document = await vscode.workspace.openTextDocument(fileUri);
-	await vscode.window.showTextDocument(document);
-	await new Promise(resolve => setTimeout(resolve, 100));
-	await vscode.commands.executeCommand('editor.action.formatDocument');
-	await document.save();
+	const retries = 5;
+	for (var i = 0; i < retries; i++) {
+		try {
+			const document = await vscode.workspace.openTextDocument(fileUri);
+			await vscode.window.showTextDocument(document);
+			await new Promise(resolve => setTimeout(resolve, 100));
+			await vscode.commands.executeCommand('editor.action.formatDocument');
+			await document.save();
+			return;
+		}
+		catch (error) {
+			await new Promise(resolve => setTimeout(resolve, 100));
+			if (i >= retries - 1) {
+				throw new Error(error);
+			}
+		}
+	}
 }
 
 module.exports = {
