@@ -30,11 +30,15 @@ function activate(context) {
 	});
 
 	const commands = registerCommands(fileListProvider);
-	context.subscriptions.push(...commands, treeView);
 
 	const codeGeneratorViewProvider = new CodeGeneratorViewProvider(context, fileListProvider);
 	codeGeneratorViewProvider.register('codeGeneratorView');
-	context.subscriptions.push(codeGeneratorViewProvider);
+
+	context.subscriptions.push(...commands, codeGeneratorViewProvider, treeView);
+
+	vscode.commands.executeCommand('workbench.view.extension.codePromptGenerator').then(() => {
+		vscode.commands.executeCommand('fileListManager.openFileList');
+	});
 }
 
 function deactivate() { }

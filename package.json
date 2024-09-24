@@ -1,17 +1,19 @@
 {
 	"name": "easy-prompt",
 	"displayName": "Easy Prompt",
-	"description": "Manage a list of files and allows for generating a GPT prompt with a single click",
+	"description": "Generate GPT prompts from your code with a single click",
 	"publisher": "jellevdg3",
 	"icon": "images/icon.png",
-	"version": "0.0.38",
+	"version": "0.0.40",
 	"engines": {
 		"vscode": "^1.93.0"
 	},
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [],
+	"activationEvents": [
+		"onStartupFinished"
+	],
 	"main": "./src/extension.js",
 	"contributes": {
 		"viewsContainers": {

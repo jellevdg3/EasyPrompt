@@ -355,6 +355,9 @@
 		function showWriteSuccess() {
 			writeToFileButton.textContent = '✓';
 			writeToFileButton.style.backgroundColor = '#4caf50';
+			filePathInput.value = '';
+			codeContentTextarea.value = '';
+
 			setTimeout(() => {
 				writeToFileButton.textContent = originalWriteButtonText;
 				writeToFileButton.style.backgroundColor = '#4d4d4d';
