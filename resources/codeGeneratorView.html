@@ -6,11 +6,11 @@
 	<meta http-equiv="Content-Security-Policy"
 		content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Code Generator</title>
+	<title>Easy Prompt</title>
 	<style>
 		body {
 			font-family: sans-serif;
-			padding: 20px;
+			padding: 0px 10px;
 			background-color: #1e1e1e;
 			color: #ffffff;
 			display: flex;
@@ -122,7 +122,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			margin-bottom: 30px;
+			margin-bottom: 0px;
 			width: 100%;
 			max-width: 600px;
 		}
@@ -191,29 +191,45 @@
 			justify-content: center;
 			margin-top: 10px;
 		}
+
+		.divider {
+			width: 100%;
+			max-width: 600px;
+			border: none;
+			border-top: 1px solid #444444;
+			margin: 10px 0;
+		}
+
+		#codeContent {
+			height: 200px;
+		}
 	</style>
 </head>
 
 <body>
-	<h2>Code Generator</h2>
+	<h2>Copy</h2>
 
 	<div class="section copy-section">
 		<div class="copy-button-container">
 			<input type="text" id="appendLine" class="append-line-input" placeholder="Append this line to the prompt">
-			<button id="copyPromptButton">Copy Prompt</button>
+			<button id="copyPromptButton" title="Copy the prompt to clipboard">Copy Prompt</button>
 		</div>
 	</div>
+
+	<hr class="divider">
+
+	<h2>Paste</h2>
 
 	<div class="section paste-section">
 		<div class="error-message" id="errorMessage">File path cannot be empty.</div>
 
 		<label for="filePath">File Path:</label>
-		<input type="text" id="filePath" placeholder="e.g., src/components/MyComponent.js" readonly>
+		<input type="text" id="filePath" placeholder="e.g., src/components/MyComponent.js">
 
 		<label for="codeContent">Code:</label>
 		<textarea id="codeContent"
 			placeholder="Paste your code here, including the file path in the first lines..."></textarea>
-		<button id="writeToFileButton">Write to File</button>
+		<button id="writeToFileButton" title="Write the code to the specified file">Write to File</button>
 
 		<div class="auto-write-container">
 			<input type="checkbox" id="autoWriteCheckbox">
