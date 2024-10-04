@@ -65,7 +65,6 @@ function extractFilesAndCodeFormat2(message) {
 
 		const filePath = extractFilePathFromContent(code);
 		if (filePath) {
-			code = removeFilePathLine(code);
 			result.push({ filePath, language, code });
 		} else {
 		}
@@ -113,8 +112,31 @@ function extractFilesAndCodeFormat4(message) {
 	return result;
 }
 
+function extractFilesAndCodeFormat5(message) {
+	const result = [];
+	const regex = /```[^`\n]*\n---\s*([^\s]+)\s*---\s*```[\s\r\n]*```([\w+#\-]*)\n([\s\S]*?)```/g;
+	let match;
+
+	while ((match = regex.exec(message)) !== null) {
+		const filePath = match[1].trim();
+		const language = match[2].trim();
+		const code = match[3].trim();
+
+		if (filePath && code) {
+			result.push({ filePath, language, code });
+		}
+	}
+
+	return result;
+}
+
 function extractPathsAndCodeFromContent(content) {
-	let result = extractFilesAndCodeFormat4(content);
+	let result = extractFilesAndCodeFormat5(content);
+	if (result.length > 0) {
+		return result;
+	}
+
+	result = extractFilesAndCodeFormat4(content);
 	if (result.length > 0) {
 		return result;
 	}
