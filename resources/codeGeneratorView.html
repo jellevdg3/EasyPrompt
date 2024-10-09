@@ -253,12 +253,12 @@
 
 		function executeWrite() {
 			const codeContent = codeContentTextarea.value;
-
+			const filePath = filePathInput.value.trim();
 			resetErrors();
-
 			vscode.postMessage({
 				command: 'writeCodeToFile',
-				content: codeContent
+				content: codeContent,
+				filePath: filePath
 			});
 		}
 

@@ -2,11 +2,31 @@ const vscode = require('vscode');
 const path = require('path');
 const { extractPathsAndCodeFromContent, normalizePath, removeFilePathLine } = require('./messageUtils');
 
-async function validateInput(rawContent, webviewView) {
+async function validateInput(rawContent, webviewView, fallbackFilePath) {
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (!workspaceFolders || workspaceFolders.length === 0) {
 		vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace folder to paste the code.');
 		return false;
+	}
+
+	if (fallbackFilePath && fallbackFilePath !== '[Multiple Files Detected]') {
+		if (!fallbackFilePath.trim()) {
+			webviewView.webview.postMessage({
+				command: 'showError',
+				field: 'filePath',
+				message: 'File path cannot be empty.'
+			});
+			return false;
+		}
+		if (!rawContent.trim()) {
+			webviewView.webview.postMessage({
+				command: 'showError',
+				field: 'codeContent',
+				message: 'Code content is empty.'
+			});
+			return false;
+		}
+		return true;
 	}
 
 	const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
@@ -38,8 +58,19 @@ async function validateInput(rawContent, webviewView) {
 	return true;
 }
 
-function prepareFiles(rawContent) {
+function prepareFiles(rawContent, fallbackFilePath) {
 	const workspaceUri = vscode.workspace.workspaceFolders[0].uri;
+	if (fallbackFilePath && fallbackFilePath !== '[Multiple Files Detected]') {
+		let filePath = normalizePath(fallbackFilePath);
+		const absolutePath = path.isAbsolute(filePath)
+			? filePath
+			: path.join(workspaceUri.fsPath, filePath);
+		return [{
+			absolutePath,
+			codeContent: rawContent
+		}];
+	}
+
 	const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
 	const preparedFiles = extractedFiles.map(file => {
 		let filePath = normalizePath(file.filePath);

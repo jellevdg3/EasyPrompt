@@ -46,7 +46,7 @@ class CodeGeneratorViewProvider {
 			async message => {
 				switch (message.command) {
 					case 'writeCodeToFile':
-						await this.handleWriteCodeToFile(message.content);
+						await this.handleWriteCodeToFile(message.content, message.filePath);
 						break;
 					case 'extractFilePath':
 						await this.extractAndPopulateFilePath(message.code);
@@ -64,14 +64,20 @@ class CodeGeneratorViewProvider {
 		);
 	}
 
-	async handleWriteCodeToFile(rawContent) {
-		const isValid = await validateInput(rawContent, this.view);
+	async handleWriteCodeToFile(rawContent, fallbackFilePath) {
+		const isValid = await validateInput(rawContent, this.view, fallbackFilePath);
 		if (!isValid) {
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
 			return;
 		}
 
-		const preparedFiles = prepareFiles(rawContent);
+		let preparedFiles;
+		if (fallbackFilePath && fallbackFilePath !== '[Multiple Files Detected]') {
+			preparedFiles = prepareFiles(rawContent, fallbackFilePath);
+		} else {
+			preparedFiles = prepareFiles(rawContent);
+		}
+
 		const writePromises = preparedFiles.map(async ({ absolutePath, codeContent }) => {
 			const fileUri = vscode.Uri.file(absolutePath);
 			try {
@@ -105,6 +111,12 @@ class CodeGeneratorViewProvider {
 				command: 'populateFilePath',
 				filePath: filePath,
 				cleanedCode: code
+			});
+		} else {
+			this.view.webview.postMessage({
+				command: 'populateFilePath',
+				filePath: '',
+				cleanedCode: rawContent
 			});
 		}
 	}
