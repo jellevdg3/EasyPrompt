@@ -28,8 +28,8 @@ async function readFileContent(fullPath) {
 }
 
 function processFileContent(fileContent, relativePath) {
-	const relativePathLower = relativePath.toLowerCase();
-	const fileName = path.basename(relativePathLower);
+	const fileName = path.basename(relativePath);
+	const fileNameLower = fileName.toLowerCase();
 	const lines = fileContent.split('\n');
 	let i = 0;
 	let inMultiLineComment = false;
@@ -47,14 +47,14 @@ function processFileContent(fileContent, relativePath) {
 			if (endIndex !== -1) {
 				inMultiLineComment = false;
 				const commentContent = line.substring(0, endIndex + 2).toLowerCase();
-				if (commentContent.includes(fileName) || commentContent.includes(relativePathLower)) {
+				if (commentContent.includes(fileNameLower)) {
 					i++;
 					continue;
 				} else {
 					break;
 				}
 			} else {
-				if (line.toLowerCase().includes(fileName) || line.toLowerCase().includes(relativePathLower)) {
+				if (line.toLowerCase().includes(fileNameLower)) {
 					i++;
 					continue;
 				} else {
@@ -65,7 +65,7 @@ function processFileContent(fileContent, relativePath) {
 			const trimmedLine = line.trim();
 			if (trimmedLine.startsWith('//') || trimmedLine.startsWith('#')) {
 				const commentContent = trimmedLine.slice(2).trim().toLowerCase();
-				if (commentContent.endsWith(fileName) || commentContent.endsWith(relativePathLower)) {
+				if (commentContent.endsWith(fileNameLower)) {
 					i++;
 					continue;
 				} else {
@@ -81,7 +81,7 @@ function processFileContent(fileContent, relativePath) {
 				} else {
 					commentContent = trimmedLine.toLowerCase();
 				}
-				if (commentContent.includes(fileName) || commentContent.includes(relativePathLower)) {
+				if (commentContent.includes(fileNameLower)) {
 					i++;
 					continue;
 				} else {
@@ -96,7 +96,7 @@ function processFileContent(fileContent, relativePath) {
 	const cleanedCodeContent = lines.slice(i).join('\n');
 	const codeBlockChar = '`';
 	const codeBlockWord = `${codeBlockChar}${codeBlockChar}${codeBlockChar}`;
-	return `--- ${relativePath} ---\n${codeBlockWord}\n${cleanedCodeContent}\n${codeBlockWord}\n\n`;
+	return `--- ${fileName} ---\n${codeBlockWord}\n${cleanedCodeContent}\n${codeBlockWord}\n\n`;
 }
 
 module.exports = {

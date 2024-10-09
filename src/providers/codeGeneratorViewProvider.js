@@ -106,7 +106,9 @@ class CodeGeneratorViewProvider {
 				cleanedCode: rawContent
 			});
 		} else if (extractedFiles.length === 1) {
-			const { filePath, code } = extractedFiles[0];
+			let { filePath, code } = extractedFiles[0];
+			// Remove any surrounding '---' and trim whitespace
+			filePath = filePath.replace(/^---\s*|\s*---$/g, '').trim();
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
 				filePath: filePath,
