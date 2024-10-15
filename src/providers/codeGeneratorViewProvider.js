@@ -29,6 +29,7 @@ class CodeGeneratorViewProvider {
 
 	async resolveWebviewView(webviewView, context, token) {
 		this.view = webviewView;
+		console.log('Webview view resolved');
 
 		webviewView.webview.options = {
 			enableScripts: true,
@@ -36,14 +37,18 @@ class CodeGeneratorViewProvider {
 		};
 
 		webviewView.webview.html = await this.getHtmlForWebview(webviewView.webview);
+		console.log('Webview HTML set');
+
 		const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
 		webviewView.webview.postMessage({
 			command: 'setAppendLine',
 			appendLine: storedAppendLine
 		});
+		console.log('Posted setAppendLine message to webview');
 
 		webviewView.webview.onDidReceiveMessage(
 			async message => {
+				console.log('Received message from webview:', message);
 				switch (message.command) {
 					case 'writeCodeToFile':
 						await this.handleWriteCodeToFile(message.content, message.filePath);
@@ -57,6 +62,10 @@ class CodeGeneratorViewProvider {
 					case 'saveAppendLine':
 						await this.saveAppendLine(message.appendLine);
 						break;
+					case 'openNewView':
+						console.log('openNewView message received');
+						vscode.commands.executeCommand('fileListManager.openNewView');
+						break;
 				}
 			},
 			undefined,
@@ -65,6 +74,7 @@ class CodeGeneratorViewProvider {
 	}
 
 	async handleWriteCodeToFile(rawContent, fallbackFilePath) {
+		console.log('Handling writeCodeToFile');
 		const isValid = await validateInput(rawContent, this.view, fallbackFilePath);
 		if (!isValid) {
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
@@ -83,7 +93,9 @@ class CodeGeneratorViewProvider {
 			try {
 				await writeFileContent(fileUri, codeContent);
 				await formatAndSaveFile(fileUri);
+				console.log(`File written and formatted: ${absolutePath}`);
 			} catch (error) {
+				console.error(`Failed to write file: ${absolutePath}`, error);
 				throw new Error(`Failed to write file: ${absolutePath}`);
 			}
 		});
@@ -91,6 +103,7 @@ class CodeGeneratorViewProvider {
 		try {
 			await Promise.all(writePromises);
 			this.view.webview.postMessage({ command: 'writeToFileSuccess' });
+			console.log('All files written successfully');
 		} catch (error) {
 			vscode.window.showErrorMessage(error.message);
 			this.view.webview.postMessage({ command: 'writeToFileFailure' });
@@ -98,6 +111,7 @@ class CodeGeneratorViewProvider {
 	}
 
 	async extractAndPopulateFilePath(rawContent) {
+		console.log('Extracting file path from content');
 		const extractedFiles = extractPathsAndCodeFromContent(rawContent.trim());
 		if (extractedFiles.length > 1) {
 			this.view.webview.postMessage({
@@ -105,25 +119,28 @@ class CodeGeneratorViewProvider {
 				filePath: '[Multiple Files Detected]',
 				cleanedCode: rawContent
 			});
+			console.log('Multiple files detected');
 		} else if (extractedFiles.length === 1) {
 			let { filePath, code } = extractedFiles[0];
-			// Remove any surrounding '---' and trim whitespace
 			filePath = filePath.replace(/^---\s*|\s*---$/g, '').trim();
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
 				filePath: filePath,
 				cleanedCode: code
 			});
+			console.log(`Single file detected: ${filePath}`);
 		} else {
 			this.view.webview.postMessage({
 				command: 'populateFilePath',
 				filePath: '',
 				cleanedCode: rawContent
 			});
+			console.log('No files detected');
 		}
 	}
 
 	async handleCopyPrompt(appendLine) {
+		console.log('Handling copyPrompt');
 		try {
 			const activeFiles = this.getActiveFiles();
 			if (activeFiles.length === 0) {
@@ -131,6 +148,7 @@ class CodeGeneratorViewProvider {
 				this.view.webview.postMessage({
 					command: 'copyPromptFailure'
 				});
+				console.log('No active files to copy prompt');
 				return;
 			}
 
@@ -139,11 +157,13 @@ class CodeGeneratorViewProvider {
 			this.view.webview.postMessage({
 				command: 'copyPromptSuccess'
 			});
+			console.log('Prompt copied to clipboard');
 		} catch (error) {
 			vscode.window.showErrorMessage('Failed to copy prompt.');
 			this.view.webview.postMessage({
 				command: 'copyPromptFailure'
 			});
+			console.error('Failed to copy prompt:', error);
 		}
 	}
 
@@ -152,10 +172,13 @@ class CodeGeneratorViewProvider {
 	}
 
 	async saveAppendLine(appendLine) {
+		console.log('Saving appendLine:', appendLine);
 		try {
 			await this.context.globalState.update(this.APPEND_LINE_KEY, appendLine);
+			console.log('Append line saved');
 		} catch (error) {
 			vscode.window.showErrorMessage('Failed to save the append line.');
+			console.error('Failed to save append line:', error);
 		}
 	}
 }

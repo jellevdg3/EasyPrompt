@@ -203,6 +203,26 @@
 		#codeContent {
 			height: 200px;
 		}
+
+		.open-new-view-button {
+			padding: 10px 20px;
+			font-size: 16px;
+			background-color: #4d4d4d;
+			color: #ffffff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			transition: background-color 0.3s ease;
+			margin-top: 20px;
+		}
+
+		.open-new-view-button:hover {
+			background-color: #666666;
+		}
+
+		.open-new-view-button:active {
+			background-color: #555555;
+		}
 	</style>
 </head>
 
@@ -237,6 +257,8 @@
 		</div>
 	</div>
 
+	<button class="open-new-view-button" id="openNewViewButton">Open New View</button>
+
 	<script>
 		const vscode = acquireVsCodeApi();
 
@@ -247,6 +269,7 @@
 		const appendLineInput = document.getElementById('appendLine');
 		const autoWriteCheckbox = document.getElementById('autoWriteCheckbox');
 		const writeToFileButton = document.getElementById('writeToFileButton');
+		const openNewViewButton = document.getElementById('openNewViewButton');
 
 		let originalWriteButtonText = writeToFileButton.textContent;
 		let originalCopyButtonText = copyPromptButton.textContent;
@@ -391,6 +414,12 @@
 
 		writeToFileButton.addEventListener('click', () => {
 			executeWrite();
+		});
+
+		openNewViewButton.addEventListener('click', () => {
+			vscode.postMessage({
+				command: 'openNewView'
+			});
 		});
 	</script>
 </body>
