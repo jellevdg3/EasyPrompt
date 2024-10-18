@@ -60,6 +60,10 @@
 			{
 				"command": "fileListManager.removeFile",
 				"title": "Remove File"
+			},
+			{
+				"command": "fileListManager.copyFileTree",
+				"title": "Copy File Tree"
 			}
 		],
 		"menus": {
@@ -77,6 +81,13 @@
 					"group": "navigation",
 					"title": "Clear Files",
 					"icon": "trash"
+				},
+				{
+					"command": "fileListManager.copyFileTree",
+					"when": "view == fileListView",
+					"group": "navigation",
+					"title": "Copy File Tree",
+					"icon": "copy"
 				}
 			],
 			"view/item/context": [
@@ -103,6 +114,10 @@
 				},
 				{
 					"command": "fileListManager.removeFile",
+					"when": "fileListViewIsFocused"
+				},
+				{
+					"command": "fileListManager.copyFileTree",
 					"when": "fileListViewIsFocused"
 				}
 			]
