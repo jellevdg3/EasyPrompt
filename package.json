@@ -4,7 +4,7 @@
 	"description": "Generate GPT prompts from your code with a single click",
 	"publisher": "jellevdg3",
 	"icon": "images/icon.png",
-	"version": "0.0.46",
+	"version": "0.0.48",
 	"engines": {
 		"vscode": "^1.93.0"
 	},

@@ -56,14 +56,64 @@ function activate(context) {
 			'newView',
 			'New View',
 			vscode.ViewColumn.One,
-			{}
+			{
+				enableScripts: true,
+				localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'resources')]
+			}
 		);
 
-		const htmlPath = path.join(context.extensionPath, 'resources', 'newView.html');
+		const htmlPath = path.join(context.extensionPath, 'resources', 'EastGPT', 'dist', 'index.html');
 		try {
-			const html = await fs.readFile(htmlPath, 'utf8');
+			let html = await fs.readFile(htmlPath, 'utf8');
+
+			const assetsPath = path.join(context.extensionPath, 'resources', 'EastGPT', 'dist', 'assets');
+			const scriptUri = panel.webview.asWebviewUri(vscode.Uri.file(path.join(assetsPath, 'index-DOFSOcTv.js')));
+			const styleUri = panel.webview.asWebviewUri(vscode.Uri.file(path.join(assetsPath, 'index-CQfFT7tr.css')));
+
+			html = html.replace('/assets/index-DOFSOcTv.js', scriptUri.toString());
+			html = html.replace('/assets/index-CQfFT7tr.css', styleUri.toString());
+
+			// Inject error handling and logging script
+			const errorHandlingScript = `
+				<script>
+					const vscode = acquireVsCodeApi();
+					window.addEventListener('load', () => {
+						console.log('Main script loaded successfully');
+						vscode.postMessage({ type: 'info', message: 'Webview panel page loaded' });
+					});
+					window.onerror = function(message, source, lineno, colno, error) {
+						vscode.postMessage({
+							type: 'error',
+							message: message,
+							source: source,
+							lineno: lineno,
+							colno: colno,
+							error: error ? error.stack : null
+						});
+					};
+					window.addEventListener('unhandledrejection', function(event) {
+						vscode.postMessage({
+							type: 'error',
+							message: event.reason ? event.reason.message : 'Unhandled rejection',
+							error: event.reason ? event.reason.stack : null
+						});
+					});
+				</script>
+			</body>`;
+			html = html.replace('</body>', errorHandlingScript);
+
 			panel.webview.html = html;
 			console.log('New view panel created successfully');
+
+			panel.webview.onDidReceiveMessage(message => {
+				if (message.type === 'error') {
+					const { message: msg, source, lineno, colno, error } = message;
+					console.error(`Webview Panel Error: ${msg} at ${source}:${lineno}:${colno}\n${error}`);
+					vscode.window.showErrorMessage(`Webview Panel Error: ${msg}`);
+				} else if (message.type === 'info') {
+					console.log(`Webview Panel Info: ${message.message}`);
+				}
+			});
 		} catch (error) {
 			console.error(`Failed to load new view: ${error.message}`);
 			vscode.window.showErrorMessage(`Failed to load new view: ${error.message}`);

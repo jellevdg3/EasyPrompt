@@ -1,0 +1,13 @@
+resources
+  EastGPT
+    dist
+      assets
+        index-CQfFT7tr.css
+        index-DOFSOcTv.js
+        materialdesignicons-webfont-B7mPwVP_.ttf
+        materialdesignicons-webfont-CSr8KVlo.eot
+        materialdesignicons-webfont-Dp5v-WZN.woff2
+        materialdesignicons-webfont-PXm3-2wK.woff
+        system-notification-199277-rK_Ordu6.mp3
+      index.html
+      vite.svg
