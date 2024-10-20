@@ -62,18 +62,33 @@ function activate(context) {
 			}
 		);
 
-		const htmlPath = path.join(context.extensionPath, 'resources', 'EastGPT', 'dist', 'index.html');
+		const htmlPath = path.join(context.extensionPath, 'resources', 'EastGPT', 'index.html');
 		try {
 			let html = await fs.readFile(htmlPath, 'utf8');
 
-			const assetsPath = path.join(context.extensionPath, 'resources', 'EastGPT', 'dist', 'assets');
-			const scriptUri = panel.webview.asWebviewUri(vscode.Uri.file(path.join(assetsPath, 'index-DOFSOcTv.js')));
-			const styleUri = panel.webview.asWebviewUri(vscode.Uri.file(path.join(assetsPath, 'index-CQfFT7tr.css')));
+			const scriptRegex = /<script[^>]*src="([^"]+)"[^>]*><\/script>/;
+			const styleRegex = /<link[^>]*href="([^"]+)"[^>]*>/;
 
-			html = html.replace('/assets/index-DOFSOcTv.js', scriptUri.toString());
-			html = html.replace('/assets/index-CQfFT7tr.css', styleUri.toString());
+			const scriptMatch = html.match(scriptRegex);
+			const styleMatch = html.match(styleRegex);
 
-			// Inject error handling and logging script
+			if (scriptMatch && styleMatch) {
+				let scriptSrc = scriptMatch[1];
+				let styleHref = styleMatch[1];
+
+				if (scriptSrc.startsWith('/')) scriptSrc = scriptSrc.substring(1);
+				if (styleHref.startsWith('/')) styleHref = styleHref.substring(1);
+
+				const scriptPath = vscode.Uri.file(path.join(context.extensionPath, 'resources', 'EastGPT', scriptSrc));
+				const scriptUri = panel.webview.asWebviewUri(scriptPath);
+
+				const stylePath = vscode.Uri.file(path.join(context.extensionPath, 'resources', 'EastGPT', styleHref));
+				const styleUri = panel.webview.asWebviewUri(stylePath);
+
+				html = html.replace(scriptMatch[1], scriptUri.toString());
+				html = html.replace(styleMatch[1], styleUri.toString());
+			}
+
 			const errorHandlingScript = `
 				<script>
 					const vscode = acquireVsCodeApi();
