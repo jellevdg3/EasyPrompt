@@ -67,7 +67,7 @@ function activate(context) {
 			let html = await fs.readFile(htmlPath, 'utf8');
 
 			const scriptRegex = /<script[^>]*src="([^"]+)"[^>]*><\/script>/;
-			const styleRegex = /<link[^>]*href="([^"]+)"[^>]*>/;
+			const styleRegex = /<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/;
 
 			const scriptMatch = html.match(scriptRegex);
 			const styleMatch = html.match(styleRegex);
@@ -87,6 +87,14 @@ function activate(context) {
 
 				html = html.replace(scriptMatch[1], scriptUri.toString());
 				html = html.replace(styleMatch[1], styleUri.toString());
+
+				console.log(scriptUri.toString());
+				console.log(styleUri.toString());
+
+				console.log(html);
+			}
+			else {
+				throw new Error('Script or stylesheet link tag not found in the HTML file');
 			}
 
 			const errorHandlingScript = `
