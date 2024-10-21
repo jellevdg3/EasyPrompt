@@ -1,5 +1,3 @@
-const NewViewManager = require('../controllers/newViewManager');
-
 class NewViewProvider {
 	constructor(viewManager) {
 		this.viewManager = viewManager;
