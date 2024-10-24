@@ -5,14 +5,15 @@ const registerCommands = require('./commands/index');
 const CodeGeneratorViewProvider = require('./providers/codeGeneratorViewProvider');
 const NewViewProvider = require('./providers/newViewProvider');
 const NewViewManager = require('./controllers/newViewManager');
+const NewViewSerializer = require('./controllers/NewViewSerializer');
 const path = require('path');
 const fs = require('fs').promises;
 
 function activate(context) {
 	console.log('Code Prompt Generator extension is now active!');
 
-	const extensionPath = context.extensionPath;
-	const fileListProvider = new FileListProvider(extensionPath);
+	const extensionUri = context.extensionUri;
+	const fileListProvider = new FileListProvider(extensionUri.fsPath);
 
 	const dragAndDrop = {
 		dragMimeTypes: ['application/vnd.code.tree.fileListView'],
@@ -45,6 +46,9 @@ function activate(context) {
 
 	const codeGeneratorViewProvider = new CodeGeneratorViewProvider(context, fileListProvider);
 	codeGeneratorViewProvider.register('codeGeneratorView');
+
+	const serializer = new NewViewSerializer(newViewManager);
+	context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('newView', serializer));
 
 	context.subscriptions.push(...commands, codeGeneratorViewProvider, newViewProvider, treeView, newViewManager);
 

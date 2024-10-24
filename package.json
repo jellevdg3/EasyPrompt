@@ -160,6 +160,7 @@
 	},
 	"license": "MIT",
 	"dependencies": {
+		"uuid": "^10.0.0",
 		"vsce": "^2.15.0"
 	}
 }
