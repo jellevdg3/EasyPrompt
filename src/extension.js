@@ -4,8 +4,7 @@ const DragAndDropController = require('./controllers/dragAndDropController');
 const registerCommands = require('./commands/index');
 const CodeGeneratorViewProvider = require('./providers/codeGeneratorViewProvider');
 const NewViewProvider = require('./providers/newViewProvider');
-const NewViewManager = require('./controllers/newViewManager');
-const NewViewSerializer = require('./controllers/NewViewSerializer');
+const NewViewManager = require('./controllers/gptViewManager');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -46,9 +45,6 @@ function activate(context) {
 
 	const codeGeneratorViewProvider = new CodeGeneratorViewProvider(context, fileListProvider);
 	codeGeneratorViewProvider.register('codeGeneratorView');
-
-	const serializer = new NewViewSerializer(newViewManager);
-	context.subscriptions.push(vscode.window.registerWebviewPanelSerializer('newView', serializer));
 
 	context.subscriptions.push(...commands, codeGeneratorViewProvider, newViewProvider, treeView, newViewManager);
 
