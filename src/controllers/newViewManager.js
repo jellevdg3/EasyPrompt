@@ -30,25 +30,31 @@ class NewViewManager {
 		);
 
 		this.panelIdMap.set(panel, panelId);
-		await this.setupPanel(panel, panelId, savedState);
+		await this.setupPanel(panel, panelId);
 
 		panel.onDidDispose(() => {
 			this.panelIdMap.delete(panel);
 		}, null, this.disposables);
+
+		this.context.subscriptions.push({
+			serialize() {
+				return { id: panelId };
+			}
+		});
 	}
 
 	async restorePanel(panel, savedState) {
-		const panelId = savedState.id;
+		const panelId = savedState ? savedState.id : uuidv4();
 		this.panelIdMap.set(panel, panelId);
 
 		panel.onDidDispose(() => {
 			this.panelIdMap.delete(panel);
 		}, null, this.disposables);
 
-		await this.setupPanel(panel, panelId, savedState);
+		await this.setupPanel(panel, panelId);
 	}
 
-	async setupPanel(panel, panelId, savedState) {
+	async setupPanel(panel, panelId) {
 		const htmlPath = path.join(this.context.extensionPath, 'resources', 'EastGPT', 'index.html');
 		try {
 			let html = await fs.readFile(htmlPath, 'utf8');
@@ -76,10 +82,7 @@ class NewViewManager {
 				html = html.replace(styleMatch[1], styleUri.toString());
 
 				html = html.replace('</body>', `<script>
-					window.vscode = acquireVsCodeApi();
-					const panelId = '${panelId}';
-					window.initializeState = ${JSON.stringify(savedState ? savedState.state : {})};
-					window.vscode.setState({ id: '${panelId}', ...${JSON.stringify(savedState ? savedState.state : {})} });
+					window.panelId = '${panelId}';
 				</script></body>`);
 			}
 			else {
@@ -89,11 +92,8 @@ class NewViewManager {
 			const errorHandlingScript = `
 				<script>
 					window.addEventListener('load', () => {
-						vscode.postMessage({ type: 'initialize', panelId });
-					});
-					window.addEventListener('load', () => {
 						console.log('Main script loaded successfully');
-						vscode.postMessage({ type: 'info', message: 'Webview panel page loaded', panelId });
+						vscode.postMessage({ type: 'info', message: 'Webview panel page loaded' });
 					});
 					window.onerror = function(message, source, lineno, colno, error) {
 						vscode.postMessage({
@@ -102,16 +102,14 @@ class NewViewManager {
 							source: source,
 							lineno: lineno,
 							colno: colno,
-							error: error ? error.stack : null,
-							panelId
+							error: error ? error.stack : null
 						});
 					};
 					window.addEventListener('unhandledrejection', function(event) {
 						vscode.postMessage({
 							type: 'error',
 							message: event.reason ? event.reason.message : 'Unhandled rejection',
-							error: event.reason ? event.reason.stack : null,
-							panelId
+							error: event.reason ? event.reason.stack : null
 						});
 					});
 				</script>
@@ -123,7 +121,6 @@ class NewViewManager {
 			console.log('New view panel set up successfully');
 
 			panel.webview.onDidReceiveMessage(message => {
-				if (message.panelId !== panelId) return;
 				if (message.type === 'error') {
 					const { message: msg, source, lineno, colno, error } = message;
 					console.error(`Webview Panel Error: ${msg} at ${source}:${lineno}:${colno}\n${error}`);

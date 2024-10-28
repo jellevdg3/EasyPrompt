@@ -1,24 +1,17 @@
 const vscode = require('vscode');
 
 class NewViewSerializer {
-	constructor(newViewManager) {
-		this.newViewManager = newViewManager;
-	}
+    constructor(newViewManager) {
+        this.newViewManager = newViewManager;
+    }
 
-	async deserializeWebviewPanel(webviewPanel, state) {
-		console.log(`Restoring panel with state: ${JSON.stringify(state)}`);
-		try {
-			await this.newViewManager.restorePanel(webviewPanel, state);
-		} catch (error) {
-			console.error(`Error deserializing webview panel: ${error.message}`);
-			vscode.window.showErrorMessage(`Failed to load view: ${error.message}`);
-		}
-	}
+    async deserializeWebviewPanel(panel, state) {
+        await this.newViewManager.restorePanel(panel, state);
+    }
 
-	serializeWebviewPanel(webviewPanel) {
-		const state = webviewPanel.webview.state;
-		return state;
-	}
+    serializeWebviewPanel(panel) {
+        return this.newViewManager.getSerializedState(panel);
+    }
 }
 
 module.exports = NewViewSerializer;
