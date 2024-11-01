@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
+const { generatePrompt } = require('../utils/promptUtils');
 
 class NewViewManager {
 	constructor(context, fileListProvider) {
@@ -10,6 +11,8 @@ class NewViewManager {
 		this.disposables = [];
 		this.panelIdMap = new WeakMap();
 		this.registerCommands();
+
+		this.APPEND_LINE_KEY = 'codeGenerator.appendLine';
 	}
 
 	registerCommands() {
@@ -120,18 +123,42 @@ class NewViewManager {
 
 			console.log('New view panel set up successfully');
 
-			panel.webview.onDidReceiveMessage(message => {
+			panel.webview.onDidReceiveMessage(async message => {
 				if (message.type === 'error') {
 					const { message: msg, source, lineno, colno, error } = message;
 					console.error(`Webview Panel Error: ${msg} at ${source}:${lineno}:${colno}\n${error}`);
 					vscode.window.showErrorMessage(`Webview Panel Error: ${msg}`);
 				} else if (message.type === 'info') {
 					console.log(`Webview Panel Info: ${message.message}`);
+				} else if (message.type === 'generatePrompt') {
+					console.log('Received generatePrompt message');
+					await this.handleGeneratePrompt(message.id, panel);
+				}
+				else {
+					console.log(`Unknown message type: ${message.type}`);
 				}
 			});
 		} catch (error) {
 			console.error(`Failed to load new view: ${error.message}`);
 			vscode.window.showErrorMessage(`Failed to load new view: ${error.message}`);
+		}
+	}
+
+	async handleGeneratePrompt(id, panel) {
+		try {
+			const activeFiles = this.fileListProvider.files.filter(file => !file.disabled);
+			if (activeFiles.length === 0) {
+				panel.webview.postMessage({ id, type: 'error', message: 'No active files to generate the prompt.' });
+				return;
+			}
+
+			const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
+			let prompt = await generatePrompt(activeFiles) + storedAppendLine;
+			console.log(prompt);
+			panel.webview.postMessage({ id, type: 'generatePrompt', code: prompt });
+		} catch (error) {
+			console.error('Failed to generate prompt:', error);
+			panel.webview.postMessage({ type: 'error', message: 'Failed to generate prompt.' });
 		}
 	}
 
