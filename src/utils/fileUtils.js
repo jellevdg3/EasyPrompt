@@ -113,6 +113,7 @@ async function formatAndSaveFile(fileUri) {
 	const retries = 5;
 	for (var i = 0; i < retries; i++) {
 		try {
+			const autoClose = false;
 			const document = await vscode.workspace.openTextDocument(fileUri);
 			const editors = vscode.window.visibleTextEditors.filter(editor => editor.document.uri.toString() === fileUri.toString());
 			const wasOpen = editors.length > 0;
@@ -120,7 +121,7 @@ async function formatAndSaveFile(fileUri) {
 			await new Promise(resolve => setTimeout(resolve, 100));
 			await vscode.commands.executeCommand('editor.action.formatDocument');
 			await document.save();
-			if (!wasOpen) {
+			if (autoClose && !wasOpen) {
 				await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 			}
 			return;

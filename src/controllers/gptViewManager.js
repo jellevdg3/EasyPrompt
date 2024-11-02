@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
 const { generatePrompt } = require('../utils/promptUtils');
+const { validateInput, prepareFiles, writeFileContent, formatAndSaveFile } = require('../utils/fileUtils');
 
 class NewViewManager {
 	constructor(context, fileListProvider) {
@@ -24,12 +25,13 @@ class NewViewManager {
 		const panelId = savedState ? savedState.id : uuidv4();
 		const panel = vscode.window.createWebviewPanel(
 			'newView',
-			'New View',
-			vscode.ViewColumn.One,
+			'GPT',
+			vscode.ViewColumn.Two,
 			{
 				enableScripts: true,
+				retainContextWhenHidden: true,
 				localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'resources')]
-			}
+			},
 		);
 
 		this.panelIdMap.set(panel, panelId);
@@ -131,8 +133,15 @@ class NewViewManager {
 				} else if (message.type === 'info') {
 					console.log(`Webview Panel Info: ${message.message}`);
 				} else if (message.type === 'generatePrompt') {
-					console.log('Received generatePrompt message');
-					await this.handleGeneratePrompt(message.id, panel);
+					console.log('Received generatePrompt message', message.data.prefixWithPrompt);
+					const prefixWithPrompt = message.data.prefixWithPrompt;
+					await this.handleGeneratePrompt(message.id, panel, prefixWithPrompt);
+				} else if (message.type === 'writeCode') {
+					console.log("Received writeCode message", message.data);
+					await this.handleWriteCode(message.data, panel);
+				} else if (message.type === 'openNewChat') {
+					console.log('Received openNewChat message');
+					await this.openNewView();
 				}
 				else {
 					console.log(`Unknown message type: ${message.type}`);
@@ -144,7 +153,7 @@ class NewViewManager {
 		}
 	}
 
-	async handleGeneratePrompt(id, panel) {
+	async handleGeneratePrompt(id, panel, prefixWithPrompt) {
 		try {
 			const activeFiles = this.fileListProvider.files.filter(file => !file.disabled);
 			if (activeFiles.length === 0) {
@@ -153,12 +162,46 @@ class NewViewManager {
 			}
 
 			const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
-			let prompt = await generatePrompt(activeFiles) + storedAppendLine;
+			let prompt = await generatePrompt(activeFiles);
+			if (prefixWithPrompt) {
+				prompt += storedAppendLine;
+			}
 			console.log(prompt);
 			panel.webview.postMessage({ id, type: 'generatePrompt', code: prompt });
 		} catch (error) {
 			console.error('Failed to generate prompt:', error);
 			panel.webview.postMessage({ type: 'error', message: 'Failed to generate prompt.' });
+		}
+	}
+
+	async handleWriteCode(content, panel) {
+		try {
+			const isValid = await validateInput(content, panel);
+			if (!isValid) {
+				panel.webview.postMessage({ type: 'writeCodeFailure' });
+				return;
+			}
+
+			let preparedFiles = prepareFiles(content);
+
+			const writePromises = preparedFiles.map(async ({ absolutePath, codeContent }) => {
+				const fileUri = vscode.Uri.file(absolutePath);
+				try {
+					await writeFileContent(fileUri, codeContent);
+					await formatAndSaveFile(fileUri);
+					console.log(`File written and formatted: ${absolutePath}`);
+				} catch (error) {
+					console.error(`Failed to write file: ${absolutePath}`, error);
+					throw new Error(`Failed to write file: ${absolutePath}`);
+				}
+			});
+
+			await Promise.all(writePromises);
+			panel.webview.postMessage({ type: 'writeCodeSuccess' });
+			console.log('All files written successfully');
+		} catch (error) {
+			vscode.window.showErrorMessage(error.message);
+			panel.webview.postMessage({ type: 'writeCodeFailure' });
 		}
 	}
 
