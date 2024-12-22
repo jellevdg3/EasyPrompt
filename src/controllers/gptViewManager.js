@@ -164,7 +164,7 @@ class NewViewManager {
 			const storedAppendLine = this.context.globalState.get(this.APPEND_LINE_KEY, '');
 			let prompt = await generatePrompt(activeFiles);
 			if (prefixWithPrompt) {
-				prompt += storedAppendLine;
+				prompt += storedAppendLine + '\n';
 			}
 			console.log(prompt);
 			panel.webview.postMessage({ id, type: 'generatePrompt', code: prompt });
